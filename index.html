@@ -398,6 +398,26 @@
   }
   .card-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: var(--text-secondary); }
 
+  /* Incident items */
+  .incident {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .incident:last-child { border-bottom: none; }
+  .incident-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .incident-dot.critical { background: var(--critical); box-shadow: 0 0 6px var(--critical); }
+  .incident-dot.warning { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+  .incident-name { font-size: 12.5px; color: var(--text-primary); font-weight: 500; flex: 1; }
+  .incident-cat {
+    font-size: 9px; font-family: 'JetBrains Mono', monospace;
+    padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .incident-cat.critical { background: rgba(239,68,68,0.08); color: var(--critical); }
+  .incident-cat.warning { background: rgba(251,146,60,0.08); color: var(--warning); }
+  .incident-reason { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+  .incident-time { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .incidents-empty { text-align: center; padding: 20px; color: var(--healthy); font-size: 13px; }
+
   /* -- Tooltip -- */
   .tip {
     position: fixed; z-index: 1000; pointer-events: none;
@@ -998,6 +1018,12 @@
 
   </div>
 
+  <!-- Recent Incidents -->
+  <div style="margin-top:36px;" id="incidents-section">
+    <div class="sec-label"><span class="ln"></span> Recent Incidents</div>
+    <div id="incidents-list" style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:16px 20px;"></div>
+  </div>
+
   <footer class="ftr">
     <p>Regenesis Pod &nbsp;&middot;&nbsp; Live Automation Monitor &nbsp;&middot;&nbsp; hub.regenesispod.com &nbsp;&middot;&nbsp; Auto-refreshes every 5 min</p>
   </footer>
@@ -1202,6 +1228,33 @@ function applyHealthData(data) {
 
   // 6. Update detail cards
   applyCardHealth(data);
+
+  // 7. Render incident timeline
+  renderIncidents(data);
+}
+
+// -- Render incident timeline --
+function renderIncidents(data) {
+  var container = document.getElementById('incidents-list');
+  if (!container) return;
+  var incidents = data.recent_incidents || [];
+  if (incidents.length === 0) {
+    container.innerHTML = '<div class="incidents-empty">All systems operational -- no recent incidents</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < incidents.length; i++) {
+    var inc = incidents[i];
+    var timeStr = inc.last_error ? timeAgo(inc.last_error) : '';
+    html += '<div class="incident">' +
+      '<div class="incident-dot ' + inc.status + '"></div>' +
+      '<div class="incident-name">' + inc.workflow + '</div>' +
+      '<span class="incident-cat ' + inc.status + '">' + inc.category + '</span>' +
+      '<span class="incident-reason">' + (inc.reason || '') + '</span>' +
+      (timeStr ? '<span class="incident-time">' + timeStr + '</span>' : '') +
+      '</div>';
+  }
+  container.innerHTML = html;
 }
 
 // -- Color pipeline SVG nodes based on health --

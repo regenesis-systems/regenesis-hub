@@ -495,7 +495,7 @@
     <div class="leg-item"><div class="leg-dot" style="background:var(--sop)"></div>SOP System</div>
     <div class="leg-item"><div class="leg-dot" style="background:var(--gws)"></div>Google Workspace</div>
     <div class="leg-item"><div class="leg-dot" style="background:var(--mon)"></div>Monitoring</div>
-    <div class="leg-item"><div class="leg-dot" style="background:var(--arc)"></div>Archive</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--arc)"></div>HR / Tax / Ops</div>
   </div>
 
   <!-- Pipeline Diagram -->
@@ -730,11 +730,11 @@
           <text x="759" y="340" text-anchor="middle" fill="rgba(167,139,250,.4)" font-family="JetBrains Mono" font-size="8.5">118 SOPs &middot; ClickUp &rarr; HTML</text>
         </g>
 
-        <!-- Archive Pipeline -->
-        <g class="nd" data-tip="Archive Pipeline|Email, meeting notes, Telegram messages archived with full-text search (FTS5). AI enrichment pipeline adds metadata, tags, summaries. Searchable organizational knowledge base.|FTS5 &bull; AI ENRICHMENT" data-c="arc">
-          <rect class="nr" x="890" y="302" width="178" height="50" rx="9" fill="var(--arc-dim)" stroke="var(--arc-border)" stroke-width="1"/>
-          <text class="nl" x="979" y="323" text-anchor="middle" fill="rgba(148,163,184,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">Archive Pipeline</text>
-          <text x="979" y="340" text-anchor="middle" fill="rgba(148,163,184,.4)" font-family="JetBrains Mono" font-size="8.5">Email &middot; Meetings &middot; Chat</text>
+        <!-- HR & Payroll -->
+        <g class="nd" data-tip="HR &amp; Payroll|Automated payroll processing for all employees. Weekly digests, monthly summaries, anomaly detection, reconciliation alerts. Permata batch payment CSV generation. WHT submission tracking.|7 WORKFLOWS" data-c="acc">
+          <rect class="nr" x="890" y="302" width="178" height="50" rx="9" fill="var(--acc-dim)" stroke="var(--acc-border)" stroke-width="1"/>
+          <text class="nl" x="979" y="323" text-anchor="middle" fill="rgba(52,211,153,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">HR &amp; Payroll</text>
+          <text x="979" y="340" text-anchor="middle" fill="rgba(52,211,153,.4)" font-family="JetBrains Mono" font-size="8.5">Payroll &middot; WHT &middot; Alerts</text>
         </g>
 
         <!-- INFRASTRUCTURE LAYER -->
@@ -914,22 +914,71 @@
       <div class="card-detail" id="detail-monitoring"></div>
     </div>
 
-    <div class="card t-arc clickable" data-category="archive">
+    <div class="card t-acc clickable" data-category="hr_payroll">
       <div class="card-h">
         <div class="card-ico">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--arc)" stroke-width="2" stroke-linecap="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         </div>
-        <div><div class="card-t">Archive Pipeline</div><div class="card-sub">FTS5 &middot; AI Enrichment</div></div>
-        <div class="card-health" id="health-archive"></div>
+        <div><div class="card-t">HR &amp; Payroll</div><div class="card-sub">7 workflows &middot; automated</div></div>
+        <div class="card-health" id="health-hr_payroll"></div>
       </div>
       <ul class="card-list">
-        <li>Email archiving with full-text search</li>
-        <li>Meeting notes &amp; Telegram messages</li>
-        <li>AI enrichment (metadata, tags, summaries)</li>
-        <li>Searchable organizational knowledge base</li>
-        <li>Webhook-driven ingestion pipeline</li>
+        <li>Weekly payroll digest &amp; monthly summary</li>
+        <li>Anomaly detection &amp; reconciliation alerts</li>
+        <li>Journal auto-generator for Xero</li>
+        <li>Permata batch payment CSV generator</li>
+        <li>WHT submission confirmation</li>
       </ul>
-      <div class="card-detail" id="detail-archive"></div>
+      <div class="card-detail" id="detail-hr_payroll"></div>
+    </div>
+
+    <!-- Row 3: New cards -->
+    <div class="card t-mon">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mon)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div><div class="card-t">Tax &amp; Compliance</div><div class="card-sub">6 workflows &middot; Indonesian tax</div></div>
+      </div>
+      <ul class="card-list">
+        <li>WHT filing reminders &amp; monthly auto-reports</li>
+        <li>DJP filing alerts &amp; Ami reminders</li>
+        <li>Tax advisor monthly export packages</li>
+        <li>Compliance tracking across all entities</li>
+        <li>Penalty alert system with escalation</li>
+      </ul>
+    </div>
+
+    <div class="card t-crm">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--crm)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </div>
+        <div><div class="card-t">Website &amp; Marketing</div><div class="card-sub">WordPress &middot; Mailchimp &middot; SMTP</div></div>
+      </div>
+      <ul class="card-list">
+        <li>regenesispod.com on WordPress / SiteGround</li>
+        <li>CTM interest form &rarr; lead capture</li>
+        <li>Mailchimp audience sync &amp; drip campaigns</li>
+        <li>WP Fluent SMTP welcome email sequences</li>
+        <li>Regional mailing list segmentation</li>
+      </ul>
+    </div>
+
+    <div class="card t-sop">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sop)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><polyline points="16 3 12 7 8 3"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        </div>
+        <div><div class="card-t">Product &amp; Manufacturing</div><div class="card-sub">V3 Production &middot; Supply Chain</div></div>
+      </div>
+      <ul class="card-list">
+        <li>V3 pod assembly &amp; quality control</li>
+        <li>Philippines shell manufacturing (Heinimex)</li>
+        <li>China component assembly pipeline</li>
+        <li>BOM management &amp; procurement tracking</li>
+        <li>IoT firmware &amp; electrical systems</li>
+      </ul>
     </div>
 
   </div>

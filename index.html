@@ -714,7 +714,7 @@
     <a href="https://app.clickup.com/9011197879/v/li/901608399496" target="_blank" rel="noopener" class="st c1" style="text-decoration:none;"><div class="n" data-count="637">0</div><div class="l">Leads in<br>Pipeline</div></a>
     <a href="https://sops.regenesispod.com" target="_blank" rel="noopener" class="st c2" style="text-decoration:none;"><div class="n" data-count="118">0</div><div class="l">SOPs Across<br>11 Departments</div></a>
     <a href="https://drive.google.com/drive/u/0/shared-drives" target="_blank" rel="noopener" class="st c3" style="text-decoration:none;"><div class="n" data-count="16">0</div><div class="l">Google Drives<br>27,715 Files</div></a>
-    <div class="st c4"><div class="n" data-count="3">0</div><div class="l">Entity<br>Accounting</div></div>
+    <div class="st c4"><div class="n" id="stat-subscribers" data-count="629">0</div><div class="l">Mailchimp<br>Subscribers</div></div>
   </div>
 
   <!-- Health Summary -->
@@ -1187,7 +1187,7 @@
         <li>Sheets as data sync layer (CRM, Mailchimp)</li>
         <li>Gmail integration for 3 business accounts</li>
         <li>Calendar for scheduling &amp; event triggers</li>
-        <li>Service account with delegated scopes</li>
+        <li>Automated file management &amp; sharing</li>
       </ul>
       <div class="card-detail" id="detail-google_workspace"></div>
     </div>
@@ -1506,6 +1506,9 @@ function applyHealthData(data) {
   // 7. Update Mailchimp metrics on Website & Marketing card
   if (data.mailchimp) {
     var mc = data.mailchimp;
+    // Update subscriber stat box
+    var subStat = document.getElementById('stat-subscribers');
+    if (subStat && mc.subscribers > 0) animateCount(subStat, mc.subscribers);
     var mcCard = document.querySelector('[data-category="website_marketing"]');
     if (mcCard) {
       var subEl = mcCard.querySelector('.card-sub');

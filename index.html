@@ -1294,8 +1294,18 @@ function applyHealthData(data) {
   var statEls = document.querySelectorAll('.st .n');
   if (statEls[0]) animateCount(statEls[0], overall.active_workflows);
   // Lead count from pipeline if available
-  if (data.pipeline && data.pipeline.total_leads > 0 && statEls[1]) {
-    animateCount(statEls[1], data.pipeline.total_leads);
+  if (data.pipeline && statEls[1]) {
+    // Show pipeline value as dollar amount
+    if (data.pipeline.total_value > 0) {
+      var valM = (data.pipeline.total_value / 1000000).toFixed(1);
+      statEls[1].textContent = '$' + valM + 'M';
+      statEls[1].removeAttribute('data-count');
+      // Update the label to show lead count too
+      var label = statEls[1].parentElement.querySelector('.l');
+      if (label) label.innerHTML = 'Pipeline Value<br>' + (data.pipeline.total_leads || 0) + ' Leads';
+    } else if (data.pipeline.total_leads > 0) {
+      animateCount(statEls[1], data.pipeline.total_leads);
+    }
   }
   if (data.static && statEls[2]) animateCount(statEls[2], data.static.sop_count);
 
@@ -1303,10 +1313,20 @@ function applyHealthData(data) {
   if (data.pipeline && data.pipeline.stages) {
     var stages = data.pipeline.stages;
     var stageEls = document.querySelectorAll('.stg .sc');
+    var stageNameEls = document.querySelectorAll('.stg .sn');
     var stageKeys = ['new_lead','qualified','call_booked','contacted','negotiation','nurture'];
     stageKeys.forEach(function(key, i) {
-      if (stageEls[i] && stages[key] !== undefined && stages[key] > 0) {
-        animateCount(stageEls[i], stages[key]);
+      var stageData = stages[key];
+      if (stageEls[i] && stageData) {
+        var count = stageData.count || stageData;
+        var value = stageData.value || 0;
+        if (typeof count === 'object') count = count.count || 0;
+        if (count > 0) animateCount(stageEls[i], count);
+        // Show dollar value under the count
+        if (value > 0 && stageNameEls[i]) {
+          var valK = value >= 1000000 ? '$' + (value/1000000).toFixed(1) + 'M' : '$' + (value/1000).toFixed(0) + 'K';
+          stageNameEls[i].innerHTML = stageNameEls[i].textContent.split('<')[0] + '<br><span style="font-size:9px;color:var(--healthy);font-family:JetBrains Mono,monospace;font-weight:400;">' + valK + '</span>';
+        }
       }
     });
   }

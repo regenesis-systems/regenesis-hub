@@ -371,6 +371,21 @@
   .card-health.o { background: rgba(251,146,60,0.08); color: var(--warning); }
   .card-health.r { background: rgba(239,68,68,0.08); color: var(--critical); }
 
+  /* Sparkline */
+  .sparkline-wrap {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .sparkline-label {
+    font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.3px; margin-bottom: 4px;
+  }
+  .sparkline-svg { width: 100%; height: 32px; display: block; }
+
+  /* Overall sparkline in health bar */
+  .health-sparkline { display: flex; align-items: center; gap: 8px; }
+  .health-sparkline svg { width: 120px; height: 24px; }
+
   /* Expandable card detail */
   .card-detail {
     margin-top: 10px; padding-top: 10px;
@@ -709,6 +724,8 @@
     <div class="hb-item"><div class="hb-dot r"></div><span id="hb-critical" style="color:var(--critical)">0</span><span style="color:var(--text-dim)">&nbsp;critical</span></div>
     <div style="border-left:1px solid rgba(255,255,255,0.06);height:16px;"></div>
     <div class="hb-item"><span style="color:var(--text-secondary)">System Health:</span>&nbsp;<span id="hb-percent" style="color:var(--healthy);font-weight:600;">--%</span></div>
+    <div style="border-left:1px solid rgba(255,255,255,0.06);height:16px;"></div>
+    <div class="hb-item health-sparkline"><span style="color:var(--text-dim)">24h:</span><span id="hb-sparkline"></span></div>
   </div>
 
   <!-- Legend -->
@@ -1431,6 +1448,13 @@ function applyHealthData(data) {
   pctEl.textContent = overall.health_percent + '%';
   pctEl.style.color = overall.critical > 0 ? 'var(--critical)' : overall.warnings > 0 ? 'var(--warning)' : 'var(--healthy)';
 
+  // 2b. Overall 24h sparkline in health bar
+  var sparkEl = document.getElementById('hb-sparkline');
+  if (sparkEl && data.hourly_errors_total) {
+    var sparkColor = overall.critical > 0 ? 'var(--critical)' : overall.warnings > 0 ? 'var(--warning)' : 'var(--healthy)';
+    sparkEl.innerHTML = renderSparkline(data.hourly_errors_total, 120, 24, sparkColor);
+  }
+
   // 3. Update stats row
   var statEls = document.querySelectorAll('.st .n');
   if (statEls[0]) animateCount(statEls[0], overall.active_workflows);
@@ -1501,6 +1525,37 @@ function applyHealthData(data) {
 
   // 8. Render incident timeline
   renderIncidents(data);
+}
+
+// -- Render sparkline SVG --
+function renderSparkline(data24h, width, height, color) {
+  if (!data24h || data24h.length === 0) return '';
+  var max = Math.max.apply(null, data24h);
+  if (max === 0) {
+    // No errors — show a flat green line
+    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+      '<line x1="0" y1="' + (height - 2) + '" x2="' + width + '" y2="' + (height - 2) + '" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>' +
+      '</svg>';
+  }
+  var stepX = width / (data24h.length - 1);
+  var points = [];
+  var areaPoints = [];
+  for (var i = 0; i < data24h.length; i++) {
+    var x = Math.round(i * stepX);
+    var y = Math.round(height - 3 - (data24h[i] / max) * (height - 6));
+    points.push(x + ',' + y);
+    areaPoints.push(x + ',' + y);
+  }
+  // Close the area path
+  areaPoints.push(width + ',' + (height - 1));
+  areaPoints.push('0,' + (height - 1));
+  var lineColor = color || 'var(--warning)';
+  var areaColor = color === 'var(--critical)' ? 'rgba(239,68,68,0.08)' :
+                  color === 'var(--healthy)' ? 'rgba(52,211,153,0.08)' : 'rgba(251,146,60,0.08)';
+  return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+    '<polygon points="' + areaPoints.join(' ') + '" fill="' + areaColor + '"/>' +
+    '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + lineColor + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '</svg>';
 }
 
 // -- Render incident timeline --
@@ -1666,6 +1721,23 @@ function applyCardHealth(data) {
       detailEl.innerHTML = html;
     } else if (detailEl && catData.detail) {
       detailEl.innerHTML = '<span class="wf-tag g">&#9679; ' + catData.detail + '</span>';
+    }
+
+    // Add sparkline if hourly error data exists
+    if (catData.hourly_errors) {
+      var sparkWrap = card.querySelector('.sparkline-wrap');
+      if (!sparkWrap) {
+        sparkWrap = document.createElement('div');
+        sparkWrap.className = 'sparkline-wrap';
+        card.appendChild(sparkWrap);
+      }
+      var hasErrors = catData.hourly_errors.some(function(v) { return v > 0; });
+      var sparkColor = catData.status === 'critical' ? 'var(--critical)' :
+                       catData.status === 'warning' ? 'var(--warning)' : 'var(--healthy)';
+      var maxErr = Math.max.apply(null, catData.hourly_errors);
+      sparkWrap.innerHTML =
+        '<div class="sparkline-label">Errors (24h)' + (hasErrors ? ' -- peak: ' + maxErr + '/hr' : ' -- none') + '</div>' +
+        renderSparkline(catData.hourly_errors, 280, 32, sparkColor);
     }
   });
 }

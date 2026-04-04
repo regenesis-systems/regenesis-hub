@@ -315,12 +315,13 @@
   .card.t-gws::after { background: linear-gradient(90deg, var(--gws), transparent); }
 
   /* Card health border overrides — AFTER card:hover so they win cascade at equal specificity */
-  .card.h-green { border: 1px solid rgba(52,211,153,0.25); }
-  .card.h-green::after { background: linear-gradient(90deg, var(--healthy), transparent); opacity: 1; }
+  /* Health borders — green keeps the card's original type color, only orange/red override */
+  .card.h-green { border: 1px solid var(--border-subtle); }
+  .card.h-green:hover { border-color: var(--border-active); }
   .card.h-orange { border: 1px solid rgba(251,146,60,0.3); }
-  .card.h-orange::after { background: linear-gradient(90deg, var(--warning), transparent); opacity: 1; }
+  .card.h-orange::after { background: linear-gradient(90deg, var(--warning), transparent) !important; opacity: 1; }
   .card.h-red { border: 1px solid rgba(239,68,68,0.3); }
-  .card.h-red::after { background: linear-gradient(90deg, var(--critical), transparent); opacity: 1; }
+  .card.h-red::after { background: linear-gradient(90deg, var(--critical), transparent) !important; opacity: 1; }
 
   .card-h { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
   .card-ico {

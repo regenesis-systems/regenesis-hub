@@ -933,12 +933,13 @@
     </div>
 
     <!-- Row 3: New cards -->
-    <div class="card t-mon">
+    <div class="card t-mon clickable" data-category="tax_compliance">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mon)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         </div>
         <div><div class="card-t">Tax &amp; Compliance</div><div class="card-sub">6 workflows &middot; Indonesian tax</div></div>
+        <div class="card-health" id="health-tax_compliance"></div>
       </div>
       <ul class="card-list">
         <li>WHT filing reminders &amp; monthly auto-reports</li>
@@ -947,14 +948,16 @@
         <li>Compliance tracking across all entities</li>
         <li>Penalty alert system with escalation</li>
       </ul>
+      <div class="card-detail" id="detail-tax_compliance"></div>
     </div>
 
-    <div class="card t-crm">
+    <div class="card t-crm clickable" data-category="website_marketing">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--crm)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
         </div>
         <div><div class="card-t">Website &amp; Marketing</div><div class="card-sub">WordPress &middot; Mailchimp &middot; SMTP</div></div>
+        <div class="card-health" id="health-website_marketing"></div>
       </div>
       <ul class="card-list">
         <li>regenesispod.com on WordPress / SiteGround</li>
@@ -963,14 +966,16 @@
         <li>WP Fluent SMTP welcome email sequences</li>
         <li>Regional mailing list segmentation</li>
       </ul>
+      <div class="card-detail" id="detail-website_marketing"></div>
     </div>
 
-    <div class="card t-sop">
+    <div class="card t-sop clickable" data-category="product_manufacturing">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sop)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><polyline points="16 3 12 7 8 3"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
         </div>
         <div><div class="card-t">Product &amp; Manufacturing</div><div class="card-sub">V3 Production &middot; Supply Chain</div></div>
+        <div class="card-health" id="health-product_manufacturing"></div>
       </div>
       <ul class="card-list">
         <li>V3 pod assembly &amp; quality control</li>
@@ -979,6 +984,7 @@
         <li>BOM management &amp; procurement tracking</li>
         <li>IoT firmware &amp; electrical systems</li>
       </ul>
+      <div class="card-detail" id="detail-product_manufacturing"></div>
     </div>
 
   </div>
@@ -1284,10 +1290,18 @@ function applyNodeColor(nodeEl, status, reason) {
 }
 
 // -- Update detail cards --
+// Static info for cards not yet tracked by webhook
+var STATIC_CARDS = {
+  tax_compliance: { status: 'healthy', total: 6, healthy: 6, detail: '6 workflows active', workflows: [] },
+  website_marketing: { status: 'healthy', total: 0, healthy: 0, detail: 'WordPress + Mailchimp', workflows: [] },
+  product_manufacturing: { status: 'healthy', total: 0, healthy: 0, detail: 'V3 in production', workflows: [] },
+  hr_payroll: { status: 'healthy', total: 7, healthy: 7, detail: '7 workflows active', workflows: [] }
+};
+
 function applyCardHealth(data) {
   document.querySelectorAll('[data-category]').forEach(function(card) {
     var catKey = card.getAttribute('data-category');
-    var catData = data.categories[catKey];
+    var catData = data.categories[catKey] || STATIC_CARDS[catKey];
     if (!catData) return;
 
     // Update card border color

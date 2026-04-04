@@ -389,6 +389,14 @@
 
   /* Clickable cards */
   .card.clickable { cursor: pointer; }
+  .card-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    margin-left: auto; flex-shrink: 0; cursor: pointer;
+    transition: all .2s ease; color: var(--text-dim);
+  }
+  .card-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: var(--text-secondary); }
 
   /* -- Tooltip -- */
   .tip {
@@ -825,7 +833,7 @@
   </div>
   <div class="sys-grid">
 
-    <div class="card t-crm clickable" data-category="crm">
+    <div class="card t-crm clickable" data-category="crm" data-link="https://app.clickup.com/9011197879/v/li/901608399496">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--crm)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -843,7 +851,7 @@
       <div class="card-detail" id="detail-crm"></div>
     </div>
 
-    <div class="card t-acc clickable" data-category="accounting">
+    <div class="card t-acc clickable" data-category="accounting" data-link="https://go.xero.com/organisationlogin/default.aspx">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="7" x2="22" y2="7"/><line x1="2" y1="11" x2="22" y2="11"/><line x1="7" y1="7" x2="7" y2="17"/></svg>
@@ -861,7 +869,7 @@
       <div class="card-detail" id="detail-accounting"></div>
     </div>
 
-    <div class="card t-sop clickable" data-category="sop">
+    <div class="card t-sop clickable" data-category="sop" data-link="https://sops.regenesispod.com">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sop)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -879,7 +887,7 @@
       <div class="card-detail" id="detail-sop"></div>
     </div>
 
-    <div class="card t-gws clickable" data-category="google_workspace">
+    <div class="card t-gws clickable" data-category="google_workspace" data-link="https://drive.google.com/drive/u/0/shared-drives">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gws)" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
@@ -897,7 +905,7 @@
       <div class="card-detail" id="detail-google_workspace"></div>
     </div>
 
-    <div class="card t-mon clickable" data-category="monitoring">
+    <div class="card t-mon clickable" data-category="monitoring" data-link="https://regenesissystems.app.n8n.cloud">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mon)" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -915,7 +923,7 @@
       <div class="card-detail" id="detail-monitoring"></div>
     </div>
 
-    <div class="card t-acc clickable" data-category="hr_payroll">
+    <div class="card t-acc clickable" data-category="hr_payroll" data-link="https://go.xero.com/organisationlogin/default.aspx">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -934,7 +942,7 @@
     </div>
 
     <!-- Row 3: New cards -->
-    <div class="card t-mon clickable" data-category="tax_compliance">
+    <div class="card t-mon clickable" data-category="tax_compliance" data-link="https://go.xero.com/organisationlogin/default.aspx">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mon)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -952,7 +960,7 @@
       <div class="card-detail" id="detail-tax_compliance"></div>
     </div>
 
-    <div class="card t-crm clickable" data-category="website_marketing">
+    <div class="card t-crm clickable" data-category="website_marketing" data-link="https://regenesispod.com/wp-admin">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--crm)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
@@ -970,7 +978,7 @@
       <div class="card-detail" id="detail-website_marketing"></div>
     </div>
 
-    <div class="card t-sop clickable" data-category="product_manufacturing">
+    <div class="card t-sop clickable" data-category="product_manufacturing" data-link="https://app.clickup.com/9011197879">
       <div class="card-h">
         <div class="card-ico">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sop)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><polyline points="16 3 12 7 8 3"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
@@ -1339,8 +1347,25 @@ function applyCardHealth(data) {
   });
 }
 
-// -- Card click-to-expand --
+// -- Card click-to-expand + link buttons --
 document.querySelectorAll('.card.clickable').forEach(function(card) {
+  // Add link button if card has a data-link
+  var linkUrl = card.getAttribute('data-link');
+  if (linkUrl) {
+    var cardH = card.querySelector('.card-h');
+    if (cardH) {
+      var linkBtn = document.createElement('a');
+      linkBtn.href = linkUrl;
+      linkBtn.target = '_blank';
+      linkBtn.rel = 'noopener';
+      linkBtn.className = 'card-link';
+      linkBtn.title = 'Open in new tab';
+      linkBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+      linkBtn.addEventListener('click', function(e) { e.stopPropagation(); });
+      cardH.appendChild(linkBtn);
+    }
+  }
+  // Click card body to expand/collapse detail
   card.addEventListener('click', function() {
     var detail = card.querySelector('.card-detail');
     if (detail) detail.classList.toggle('open');

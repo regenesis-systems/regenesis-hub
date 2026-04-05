@@ -1491,7 +1491,10 @@ function applyHealthData(data) {
         // Show dollar value under the count
         if (value > 0 && stageNameEls[i]) {
           var valK = value >= 1000000 ? '$' + (value/1000000).toFixed(1) + 'M' : '$' + (value/1000).toFixed(0) + 'K';
-          stageNameEls[i].innerHTML = stageNameEls[i].textContent.split('<')[0] + '<br><span style="font-size:9px;color:var(--healthy);font-family:JetBrains Mono,monospace;font-weight:400;">' + valK + '</span>';
+          // Use data-name to preserve original name across refreshes (textContent includes prior dollar text)
+          var baseName = stageNameEls[i].getAttribute('data-name');
+          if (!baseName) { baseName = stageNameEls[i].textContent.replace(/\$[\d.]+[KM]/g, '').trim(); stageNameEls[i].setAttribute('data-name', baseName); }
+          stageNameEls[i].innerHTML = baseName + '<br><span style="font-size:9px;color:var(--healthy);font-family:JetBrains Mono,monospace;font-weight:400;">' + valK + '</span>';
         }
       }
     });

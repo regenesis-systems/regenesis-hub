@@ -1237,7 +1237,7 @@
   </div>
 
   <footer class="ftr">
-    <p>Regenesis Pod &nbsp;&middot;&nbsp; Live Automation Monitor &nbsp;&middot;&nbsp; hub.regenesispod.com &nbsp;&middot;&nbsp; Auto-refreshes every 5 min</p>
+    <p>Regenesis Pod &nbsp;&middot;&nbsp; Live Automation Monitor &nbsp;&middot;&nbsp; hub.regenesispod.com &nbsp;&middot;&nbsp; Auto-refreshes every 15 min</p>
   </footer>
 
 </div>
@@ -1280,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // -- Configuration --
 var WEBHOOK_URL = 'https://regenesissystems.app.n8n.cloud/webhook/hub-stats';
-var REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+var REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
 
 // Pipeline node -> workflow IDs mapping
 var NODE_WORKFLOWS = {
@@ -1414,12 +1414,12 @@ function fetchHealthData() {
       currentData = data;
       applyHealthData(data);
       document.getElementById('last-synced').textContent =
-        'Last synced: just now  |  Auto-refresh: 5 min';
+        'Last synced: just now  |  Auto-refresh: 15 min';
     })
     .catch(function(err) {
       console.warn('Hub stats fetch failed:', err);
       document.getElementById('last-synced').textContent =
-        'Sync failed - retrying in 5 min  |  ' + new Date().toLocaleTimeString();
+        'Sync failed - retrying in 15 min  |  ' + new Date().toLocaleTimeString();
     });
 }
 
@@ -1878,7 +1878,7 @@ setInterval(function() {
   if (!currentData) return;
   var syncedEl = document.getElementById('last-synced');
   var diff = Math.floor((Date.now() - new Date(currentData.timestamp).getTime()) / 60000);
-  syncedEl.textContent = 'Last synced: ' + (diff < 1 ? 'just now' : diff + ' min ago') + '  |  Auto-refresh: 5 min';
+  syncedEl.textContent = 'Last synced: ' + (diff < 1 ? 'just now' : diff + ' min ago') + '  |  Auto-refresh: 15 min';
 }, 60000);
 </script>
 </body>

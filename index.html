@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regenesis Hub - Live Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg-deep: #07090d;
+    --bg-surface: #0e1117;
+    --bg-card: #141720;
+    --bg-card-hover: #1a1e2a;
+    --border-subtle: rgba(255,255,255,0.05);
+    --border-active: rgba(255,255,255,0.12);
+    --text-primary: #e4e7ee;
+    --text-secondary: #7d829a;
+    --text-dim: #464c65;
+
+    --crm: #4a9eff;
+    --crm-dim: rgba(74,158,255,0.08);
+    --crm-border: rgba(74,158,255,0.28);
+    --crm-glow: rgba(74,158,255,0.12);
+
+    --acc: #34d399;
+    --acc-dim: rgba(52,211,153,0.07);
+    --acc-border: rgba(52,211,153,0.25);
+
+    --sop: #a78bfa;
+    --sop-dim: rgba(167,139,250,0.07);
+    --sop-border: rgba(167,139,250,0.25);
+
+    --mon: #fb923c;
+    --mon-dim: rgba(251,146,60,0.07);
+    --mon-border: rgba(251,146,60,0.25);
+
+    --arc: #94a3b8;
+    --arc-dim: rgba(148,163,184,0.06);
+    --arc-border: rgba(148,163,184,0.2);
+
+    --gws: #facc15;
+    --gws-dim: rgba(250,204,21,0.05);
+    --gws-border: rgba(250,204,21,0.2);
+
+    /* Health status colors */
+    --healthy: #34d399;
+    --healthy-dim: rgba(52,211,153,0.06);
+    --healthy-border: rgba(52,211,153,0.3);
+    --healthy-glow: rgba(52,211,153,0.12);
+    --warning: #fb923c;
+    --warning-dim: rgba(251,146,60,0.07);
+    --warning-border: rgba(251,146,60,0.35);
+    --warning-glow: rgba(251,146,60,0.12);
+    --critical: #ef4444;
+    --critical-dim: rgba(239,68,68,0.07);
+    --critical-border: rgba(239,68,68,0.35);
+    --critical-glow: rgba(239,68,68,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* -- Ambient -- */
+  .ambient {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+  .ambient::before {
+    content: ''; position: absolute;
+    top: -30%; left: 10%; width: 50%; height: 60%;
+    background: radial-gradient(ellipse, rgba(74,158,255,0.035) 0%, transparent 70%);
+    animation: driftA 22s ease-in-out infinite;
+  }
+  .ambient::after {
+    content: ''; position: absolute;
+    bottom: -20%; right: 5%; width: 45%; height: 55%;
+    background: radial-gradient(ellipse, rgba(167,139,250,0.025) 0%, transparent 70%);
+    animation: driftB 28s ease-in-out infinite;
+  }
+  @keyframes driftA { 0%,100%{transform:translate(0,0)} 50%{transform:translate(4%,6%)} }
+  @keyframes driftB { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-3%,-5%)} }
+
+  /* Grain overlay */
+  .grain {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  /* Grid */
+  .grid-bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  /* -- Container -- */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 1520px;
+    margin: 0 auto;
+    padding: 36px 44px 56px;
+  }
+
+  /* -- Header -- */
+  .hdr { text-align: center; margin-bottom: 40px; animation: fadeUp .7s ease-out; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-radius: 100px;
+    background: var(--crm-dim); border: 1px solid var(--crm-border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500; color: var(--crm);
+    letter-spacing: 1.8px; text-transform: uppercase;
+    margin-bottom: 16px;
+    transition: background .4s ease, border-color .4s ease, color .4s ease;
+  }
+  .badge .pulse {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--crm);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(74,158,255,.4)}
+    50%{opacity:.6;box-shadow:0 0 0 6px rgba(74,158,255,0)}
+  }
+  /* Badge health variants */
+  .badge.ok { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.28); color: var(--healthy); }
+  .badge.ok .pulse { background: var(--healthy); animation: blinkGreen 2s ease-in-out infinite; }
+  .badge.warn { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.28); color: var(--warning); }
+  .badge.warn .pulse { background: var(--warning); animation: blinkOrange 1.5s ease-in-out infinite; }
+  .badge.crit { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.28); color: var(--critical); }
+  .badge.crit .pulse { background: var(--critical); animation: blinkRed 1s ease-in-out infinite; }
+  @keyframes blinkGreen {
+    0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.4)}
+    50%{opacity:.6;box-shadow:0 0 0 6px rgba(52,211,153,0)}
+  }
+  @keyframes blinkOrange {
+    0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(251,146,60,.4)}
+    50%{opacity:.6;box-shadow:0 0 0 6px rgba(251,146,60,0)}
+  }
+  @keyframes blinkRed {
+    0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(239,68,68,.4)}
+    50%{opacity:.5;box-shadow:0 0 0 6px rgba(239,68,68,0)}
+  }
+
+  .hdr h1 {
+    font-size: 40px; font-weight: 700; letter-spacing: -1.5px; line-height: 1.08;
+    background: linear-gradient(135deg, #f0f2f8 0%, #6b7094 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 10px;
+  }
+  .hdr .sub {
+    font-size: 14px; color: var(--text-secondary); font-weight: 400;
+  }
+  .hdr .sub b {
+    color: var(--text-dim); font-weight: 400; margin: 0 5px;
+  }
+  .hdr .updated {
+    font-size: 10px; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; margin-top: 6px;
+  }
+
+  /* -- Stats -- */
+  .stats {
+    display: flex; justify-content: center; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 40px; animation: fadeUp .7s ease-out .1s both;
+  }
+  .st {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 18px; border-radius: 11px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    transition: all .25s ease;
+  }
+  .st:hover { border-color: var(--border-active); transform: translateY(-1px); background: var(--bg-card-hover); }
+  .st .n {
+    font-family: 'JetBrains Mono', monospace; font-size: 21px; font-weight: 500;
+  }
+  .st .l { font-size: 11.5px; color: var(--text-secondary); line-height: 1.3; }
+  .st.c1 .n { color: var(--crm); }
+  .st.c2 .n { color: var(--sop); }
+  .st.c3 .n { color: var(--gws); }
+  .st.c4 .n { color: var(--acc); }
+  .st.c5 .n { color: var(--mon); }
+
+  /* -- Health Summary Bar -- */
+  .health-bar {
+    display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+    margin-bottom: 28px; padding: 12px 20px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; animation: fadeUp .7s ease-out .12s both;
+  }
+  .hb-item {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .hb-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .hb-dot.g { background: var(--healthy); box-shadow: 0 0 6px var(--healthy); }
+  .hb-dot.o { background: var(--warning); box-shadow: 0 0 6px var(--warning); animation: healthPulse 2s infinite; }
+  .hb-dot.r { background: var(--critical); box-shadow: 0 0 6px var(--critical); animation: healthPulse 1.2s infinite; }
+  @keyframes healthPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* -- Legend -- */
+  .legend {
+    display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 28px; animation: fadeUp .7s ease-out .15s both;
+  }
+  .leg-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.3px;
+  }
+  .leg-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+  }
+
+  /* -- Section Label -- */
+  .sec-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 16px; padding-left: 2px;
+  }
+  .sec-label .ln { width: 28px; height: 1px; background: var(--text-dim); }
+
+  /* -- Pipeline Canvas -- */
+  .pipe-section { margin-bottom: 36px; animation: fadeUp .7s ease-out .2s both; }
+  .pipe-canvas {
+    position: relative; background: var(--bg-surface);
+    border: 1px solid var(--border-subtle); border-radius: 14px;
+    padding: 32px; overflow: hidden;
+  }
+  .pipe-canvas::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 40%, rgba(74,158,255,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 60%, rgba(52,211,153,0.02) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .pipe-svg { width: 100%; height: auto; display: block; position: relative; z-index: 1; }
+
+  /* SVG interactive */
+  .nd { cursor: pointer; }
+  .nd:hover .nr { filter: brightness(1.3); }
+  .nd:hover .nl { fill: #fff !important; }
+
+  /* Animated flow dash */
+  .fd { stroke-dasharray: 5 4; animation: dashFlow 1.2s linear infinite; }
+  @keyframes dashFlow { to { stroke-dashoffset: -18; } }
+  /* Slow/stopped flow lines */
+  .fd-slow { stroke-dasharray: 5 4; animation: dashFlow 3s linear infinite; }
+  .fd-stop { stroke-dasharray: 5 4; animation: none; opacity: 0.2; }
+
+  /* Particle animation on path */
+  .particle {
+    animation: particleMove 3s linear infinite;
+  }
+  @keyframes particleMove { 0%{offset-distance:0%} 100%{offset-distance:100%} }
+
+  /* -- Pipeline Stages -- */
+  .stages { margin-top: 28px; animation: fadeUp .7s ease-out .35s both; }
+  .stages-track {
+    display: flex; gap: 4px; padding: 16px 24px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px;
+    overflow-x: auto;
+  }
+  .stg {
+    flex: 1; min-width: 110px; padding: 12px 14px; border-radius: 9px;
+    text-align: center; background: var(--bg-card); border: 1px solid var(--border-subtle);
+    transition: all .25s ease;
+  }
+  .stg:hover { background: var(--bg-card-hover); border-color: var(--crm-border); transform: translateY(-1px); }
+  .stg .sn { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+  .stg .sc {
+    font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 500; color: var(--crm);
+  }
+  .stg-arr { display: flex; align-items: center; color: var(--text-dim); font-size: 14px; flex-shrink: 0; padding: 0 2px; }
+
+  /* -- Systems Grid -- */
+  .sys-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    animation: fadeUp .7s ease-out .4s both;
+  }
+  @media (max-width: 1100px) { .sys-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px) { .sys-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    position: relative; padding: 24px; border-radius: 12px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    transition: all .3s ease; overflow: hidden;
+  }
+  .card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    border-radius: 12px 12px 0 0; opacity: 0; transition: opacity .3s ease;
+  }
+  .card:hover { border-color: var(--border-active); background: var(--bg-card-hover); transform: translateY(-2px); }
+  .card:hover::after { opacity: 1; }
+
+  .card.t-crm::after { background: linear-gradient(90deg, var(--crm), transparent); }
+  .card.t-acc::after { background: linear-gradient(90deg, var(--acc), transparent); }
+  .card.t-sop::after { background: linear-gradient(90deg, var(--sop), transparent); }
+  .card.t-mon::after { background: linear-gradient(90deg, var(--mon), transparent); }
+  .card.t-arc::after { background: linear-gradient(90deg, var(--arc), transparent); }
+  .card.t-gws::after { background: linear-gradient(90deg, var(--gws), transparent); }
+
+  /* Card health border overrides — AFTER card:hover so they win cascade at equal specificity */
+  /* Health borders — green keeps the card's original type color, only orange/red override */
+  .card.h-green { border: 1px solid var(--border-subtle); }
+  .card.h-green:hover { border-color: var(--border-active); }
+  .card.h-orange { border: 1px solid rgba(251,146,60,0.3); }
+  .card.h-orange::after { background: linear-gradient(90deg, var(--warning), transparent) !important; opacity: 1; }
+  .card.h-red { border: 1px solid rgba(239,68,68,0.3); }
+  .card.h-red::after { background: linear-gradient(90deg, var(--critical), transparent) !important; opacity: 1; }
+
+  .card-h { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+  .card-ico {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .t-crm .card-ico { background: var(--crm-dim); border: 1px solid var(--crm-border); }
+  .t-acc .card-ico { background: var(--acc-dim); border: 1px solid var(--acc-border); }
+  .t-sop .card-ico { background: var(--sop-dim); border: 1px solid var(--sop-border); }
+  .t-mon .card-ico { background: var(--mon-dim); border: 1px solid var(--mon-border); }
+  .t-arc .card-ico { background: var(--arc-dim); border: 1px solid var(--arc-border); }
+  .t-gws .card-ico { background: var(--gws-dim); border: 1px solid var(--gws-border); }
+
+  .card-t { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+  .card-sub { font-size: 10.5px; font-family: 'JetBrains Mono', monospace; }
+  .t-crm .card-sub { color: var(--crm); }
+  .t-acc .card-sub { color: var(--acc); }
+  .t-sop .card-sub { color: var(--sop); }
+  .t-mon .card-sub { color: var(--mon); }
+  .t-arc .card-sub { color: var(--arc); }
+  .t-gws .card-sub { color: var(--gws); }
+
+  .card-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .card-list li {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 12.5px; color: var(--text-secondary); line-height: 1.45;
+  }
+  .card-list li::before {
+    content: ''; width: 3px; height: 3px; border-radius: 50%;
+    margin-top: 7px; flex-shrink: 0;
+  }
+  .t-crm .card-list li::before { background: var(--crm); }
+  .t-acc .card-list li::before { background: var(--acc); }
+  .t-sop .card-list li::before { background: var(--sop); }
+  .t-mon .card-list li::before { background: var(--mon); }
+  .t-arc .card-list li::before { background: var(--arc); }
+  .t-gws .card-list li::before { background: var(--gws); }
+
+  /* Health badge on cards */
+  .card-health {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    font-size: 9px; font-family: 'JetBrains Mono', monospace;
+    padding: 3px 8px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .card-health.g { background: rgba(52,211,153,0.08); color: var(--healthy); }
+  .card-health.o { background: rgba(251,146,60,0.08); color: var(--warning); }
+  .card-health.r { background: rgba(239,68,68,0.08); color: var(--critical); }
+
+  /* Sparkline */
+  .sparkline-wrap {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .sparkline-label {
+    font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.3px; margin-bottom: 4px;
+  }
+  .sparkline-svg { width: 100%; height: 32px; display: block; }
+
+  /* Overall sparkline in health bar */
+  .health-sparkline { display: flex; align-items: center; gap: 8px; }
+  .health-sparkline svg { width: 120px; height: 24px; }
+
+  /* Expandable card detail */
+  .card-detail {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: none;
+  }
+  .card-detail.open { display: block; }
+  .wf-tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 6px; border-radius: 3px;
+    font-size: 8.5px; font-family: 'JetBrains Mono', monospace; margin: 2px;
+  }
+  .wf-tag.g { color: var(--healthy); background: rgba(52,211,153,0.06); }
+  .wf-tag.o { color: var(--warning); background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.15); }
+  .wf-tag.r { color: var(--critical); background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15); }
+
+  /* Clickable cards */
+  .card.clickable { cursor: pointer; }
+  .card-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    margin-left: auto; flex-shrink: 0; cursor: pointer;
+    transition: all .2s ease; color: var(--text-dim);
+  }
+  .card-link:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: var(--text-secondary); }
+
+  /* Incident items */
+  .incident {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .incident:last-child { border-bottom: none; }
+  .incident-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .incident-dot.critical { background: var(--critical); box-shadow: 0 0 6px var(--critical); }
+  .incident-dot.warning { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+  .incident-name { font-size: 12.5px; color: var(--text-primary); font-weight: 500; flex: 1; }
+  .incident-cat {
+    font-size: 9px; font-family: 'JetBrains Mono', monospace;
+    padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .incident-cat.critical { background: rgba(239,68,68,0.08); color: var(--critical); }
+  .incident-cat.warning { background: rgba(251,146,60,0.08); color: var(--warning); }
+  .incident-reason { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+  .incident-time { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .incidents-empty { text-align: center; padding: 20px; color: var(--healthy); font-size: 13px; }
+
+  /* -- Tooltip -- */
+  .tip {
+    position: fixed; z-index: 1000; pointer-events: none;
+    background: #181c26; border: 1px solid var(--border-active);
+    border-radius: 10px; padding: 14px 18px; max-width: 300px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03);
+    opacity: 0; transform: translateY(4px);
+    transition: opacity .15s ease, transform .15s ease;
+    font-size: 12.5px; line-height: 1.5; color: var(--text-secondary);
+    backdrop-filter: blur(12px);
+  }
+  .tip.on { opacity: 1; transform: translateY(0); }
+  .tip .t-t { font-weight: 600; color: var(--text-primary); margin-bottom: 5px; font-size: 13.5px; }
+  .tip .t-b {
+    display: inline-block; margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
+    letter-spacing: 0.5px; padding: 2px 7px; border-radius: 3px;
+  }
+
+  /* -- Node Panel (pipeline node click) -- */
+  .node-panel {
+    position: fixed; z-index: 1001; background: #181c26;
+    border: 1px solid var(--border-active); border-radius: 10px;
+    padding: 16px 20px; max-width: 340px; min-width: 260px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.55);
+    opacity: 0; transform: translateY(4px);
+    transition: opacity .15s ease, transform .15s ease;
+    font-size: 12px; color: var(--text-secondary);
+    pointer-events: none;
+  }
+  .node-panel.on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .node-panel .np-title { font-weight: 600; color: var(--text-primary); margin-bottom: 6px; font-size: 13px; }
+  .node-panel .np-row { display: flex; justify-content: space-between; margin: 4px 0; }
+  .node-panel .np-label { color: var(--text-dim); }
+  .node-panel .np-close { position: absolute; top: 8px; right: 12px; cursor: pointer; color: var(--text-dim); font-size: 14px; }
+  .node-panel .np-close:hover { color: var(--text-primary); }
+  .node-panel .np-errors { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .node-panel .np-error { font-size: 10px; color: var(--warning); font-family: 'JetBrains Mono', monospace; margin: 3px 0; }
+
+  /* -- Footer -- */
+  .ftr {
+    text-align: center; margin-top: 44px; padding-top: 28px;
+    border-top: 1px solid var(--border-subtle);
+    animation: fadeUp .7s ease-out .5s both;
+  }
+  .ftr p {
+    font-size: 11px; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: .5px;
+  }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes nodeIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+
+  /* -- Login Screen -- */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg-deep);
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeUp .5s ease-out;
+  }
+  #login-screen.hidden { display: none; }
+  .login-box {
+    text-align: center; padding: 48px 40px; border-radius: 16px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    width: 380px; max-width: 90vw;
+  }
+  .login-logo {
+    font-size: 32px; font-weight: 700; letter-spacing: -1px; margin-bottom: 6px;
+    background: linear-gradient(135deg, #f0f2f8 0%, #6b7094 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .login-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; }
+  .login-input {
+    width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-subtle);
+    background: var(--bg-surface); color: var(--text-primary); font-size: 14px;
+    font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 10px;
+    transition: border-color .2s;
+  }
+  .login-input:focus { border-color: var(--crm); }
+  .login-input::placeholder { color: var(--text-dim); }
+  .login-btn {
+    width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer;
+    background: linear-gradient(135deg, rgba(74,158,255,0.15), rgba(74,158,255,0.08));
+    border: 1px solid rgba(74,158,255,0.3); color: var(--crm);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+    letter-spacing: 1px; text-transform: uppercase; margin-top: 8px;
+    transition: all .2s;
+  }
+  .login-btn:hover { background: rgba(74,158,255,0.12); border-color: rgba(74,158,255,0.5); }
+  .login-error { color: var(--critical); font-size: 11px; margin-top: 10px; display: none; font-family: 'JetBrains Mono', monospace; }
+  .login-footer-text { font-size: 10px; color: var(--text-dim); margin-top: 20px; font-family: 'JetBrains Mono', monospace; }
+
+  @media (max-width: 1200px) { .wrap{padding:28px 20px 44px} .hdr h1{font-size:32px} .pipe-canvas{padding:20px} }
+
+  /* ===== TABLET (768px) ===== */
+  @media (max-width: 768px) {
+    .wrap { padding: 20px 14px 36px; }
+
+    /* Header */
+    .hdr { margin-bottom: 28px; }
+    .hdr h1 { font-size: 24px; line-height: 1.15; letter-spacing: -1px; }
+    .hdr .sub { font-size: 12px; }
+    .hdr .updated { font-size: 9px; }
+    .badge { font-size: 9px; padding: 4px 10px; }
+
+    /* Stats — 2 per row on tablet, last one centered */
+    .stats { gap: 8px; justify-content: center; margin-bottom: 28px; }
+    .st { padding: 9px 14px; flex: 1 1 calc(50% - 8px); max-width: calc(50% - 4px); min-width: 140px; }
+    .st .n { font-size: 18px; }
+    .st .l { font-size: 10.5px; }
+
+    /* Health summary bar — wrap items */
+    .health-bar { gap: 10px; padding: 10px 14px; justify-content: center; }
+    .hb-item { font-size: 10px; }
+
+    /* Legend */
+    .legend { gap: 12px; }
+    .leg-item { font-size: 10px; }
+
+    /* Pipeline SVG — horizontal scroll */
+    .pipe-canvas { overflow-x: auto; overflow-y: hidden; padding: 16px; -webkit-overflow-scrolling: touch; }
+    .pipe-svg { min-width: 1000px; }
+
+    /* Pipeline stages — already overflow-x:auto, just tighten padding */
+    .stages-track { padding: 12px 14px; }
+    .stg { min-width: 90px; padding: 10px 10px; }
+    .stg .sn { font-size: 10px; }
+    .stg .sc { font-size: 15px; }
+
+    /* Cards grid — already 2-col at 1100px, 1-col at 700px via existing queries */
+    .card { padding: 18px; }
+    .card-t { font-size: 13px; }
+    .card-list li { font-size: 12px; }
+
+    /* Node panel — constrain to viewport */
+    .node-panel { max-width: calc(100vw - 28px); min-width: 220px; left: 14px !important; right: 14px !important; }
+
+    /* Tooltip — constrain to viewport */
+    .tip { max-width: calc(100vw - 28px); }
+
+    /* Incidents */
+    .incident { gap: 8px; flex-wrap: wrap; }
+    .incident-name { font-size: 12px; min-width: 0; }
+    .incident-reason { font-size: 10px; }
+    .incident-time { font-size: 9px; }
+
+    /* Footer */
+    .ftr { margin-top: 28px; padding-top: 20px; }
+    .ftr p { font-size: 10px; }
+
+    /* Login — full width */
+    .login-box { width: 100%; max-width: 100%; padding: 36px 24px; border-radius: 12px; }
+  }
+
+  /* ===== PHONE (480px) ===== */
+  @media (max-width: 480px) {
+    .wrap { padding: 14px 10px 28px; }
+
+    /* Header */
+    .hdr { margin-bottom: 20px; }
+    .hdr h1 { font-size: 20px; line-height: 1.2; letter-spacing: -0.5px; }
+    .hdr .sub { font-size: 11px; }
+    .hdr .sub b { margin: 0 3px; }
+    .badge { font-size: 8.5px; padding: 3px 8px; letter-spacing: 1.2px; }
+
+    /* Stats — single column stack */
+    .stats { flex-direction: column; gap: 6px; margin-bottom: 20px; }
+    .st { flex: 1 1 100%; max-width: 100%; padding: 10px 14px; }
+    .st .n { font-size: 19px; }
+    .st .l { font-size: 11px; }
+
+    /* Health summary bar — vertical stack */
+    .health-bar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px; }
+    .health-bar > div[style*="border-left"] { display: none; }
+    .hb-item { font-size: 10.5px; }
+
+    /* Legend — tighter */
+    .legend { gap: 8px 14px; margin-bottom: 20px; }
+    .leg-item { font-size: 9.5px; }
+
+    /* Pipeline SVG — scroll hint */
+    .pipe-canvas { padding: 12px; border-radius: 10px; }
+    .pipe-svg { min-width: 900px; }
+
+    /* Pipeline stages */
+    .stages-track { padding: 10px 10px; gap: 3px; }
+    .stg { min-width: 80px; padding: 8px 6px; }
+    .stg .sn { font-size: 9px; }
+    .stg .sc { font-size: 14px; }
+    .stg-arr { font-size: 12px; padding: 0; }
+
+    /* Cards */
+    .card { padding: 16px; border-radius: 10px; }
+    .card-h { gap: 8px; margin-bottom: 10px; }
+    .card-ico { width: 30px; height: 30px; border-radius: 7px; }
+    .card-t { font-size: 12.5px; }
+    .card-sub { font-size: 9.5px; }
+    .card-list li { font-size: 11.5px; gap: 6px; }
+    .card-health { font-size: 8px; padding: 2px 6px; }
+
+    /* Node panel — full width bottom sheet style */
+    .node-panel { max-width: calc(100vw - 20px); min-width: unset; left: 10px !important; right: 10px !important; }
+
+    /* Tooltip */
+    .tip { max-width: calc(100vw - 20px); font-size: 11.5px; padding: 12px 14px; }
+    .tip .t-t { font-size: 12.5px; }
+
+    /* Incidents */
+    .incident { padding: 8px 0; gap: 6px; }
+    .incident-name { font-size: 11.5px; }
+    .incident-cat { font-size: 8px; padding: 2px 5px; }
+
+    /* Section labels */
+    .sec-label { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 12px; }
+    .sec-label .ln { width: 20px; }
+
+    /* Login — edge to edge */
+    .login-box { padding: 28px 18px; border-radius: 10px; }
+    .login-logo { font-size: 26px; }
+    .login-sub { font-size: 11px; margin-bottom: 20px; }
+    .login-input { padding: 10px 12px; font-size: 13px; }
+    .login-btn { padding: 10px; font-size: 11px; }
+
+    /* Footer */
+    .ftr { margin-top: 24px; padding-top: 16px; }
+    .ftr p { font-size: 9px; letter-spacing: 0.3px; }
+
+    /* Workflow tags in detail expand */
+    .wf-tag { font-size: 8px; padding: 2px 5px; }
+  }
+
+  /* Prevent horizontal scroll on body at all sizes */
+  @media (max-width: 768px) {
+    html, body { overflow-x: hidden; max-width: 100vw; }
+  }
+</style>
+</head>
+<body>
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Regenesis Hub</div>
+    <div class="login-sub">Automation Ecosystem Monitor</div>
+    <input type="text" id="login-user" class="login-input" placeholder="Username" autocomplete="off" autofocus/>
+    <input type="password" id="login-pass" class="login-input" placeholder="Password"/>
+    <button class="login-btn" onclick="doLogin()">Access Dashboard</button>
+    <div class="login-error" id="login-error">Invalid credentials. Please try again.</div>
+    <div class="login-footer-text">PT Recharge Pod Ltd Bali &nbsp;&middot;&nbsp; Confidential</div>
+  </div>
+</div>
+
+<div class="ambient"></div>
+<div class="grain"></div>
+<div class="grid-bg"></div>
+<div id="tip" class="tip"></div>
+<div id="node-panel" class="node-panel">
+  <span class="np-close" onclick="closeNodePanel()">&times;</span>
+  <div class="np-title" id="np-title"></div>
+  <div class="np-row"><span class="np-label">Status</span><span id="np-status"></span></div>
+  <div class="np-row"><span class="np-label">Last Run</span><span id="np-lastrun"></span></div>
+  <div class="np-row"><span class="np-label">Workflows</span><span id="np-wfcount"></span></div>
+  <div class="np-errors" id="np-errors"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="hdr">
+    <div class="badge"><span class="pulse"></span> Live System</div>
+    <h1>Regenesis Automation Ecosystem</h1>
+    <p class="sub">n8n <b>&middot;</b> ClickUp <b>&middot;</b> Google Workspace <b>&middot;</b> Mailchimp <b>&middot;</b> Xero</p>
+    <p class="updated" id="last-synced">Connecting to live data...</p>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats">
+    <a href="https://regenesissystems.app.n8n.cloud" target="_blank" rel="noopener" class="st c1" style="text-decoration:none;"><div class="n" data-count="66">0</div><div class="l">Active n8n<br>Workflows</div></a>
+    <a href="https://app.clickup.com/9011197879/v/li/901608399496" target="_blank" rel="noopener" class="st c1" style="text-decoration:none;"><div class="n" data-count="637">0</div><div class="l">Leads in<br>Pipeline</div></a>
+    <a href="https://sops.regenesispod.com" target="_blank" rel="noopener" class="st c2" style="text-decoration:none;"><div class="n" data-count="118">0</div><div class="l">SOPs Across<br>11 Departments</div></a>
+    <a href="https://drive.google.com/drive/u/0/shared-drives" target="_blank" rel="noopener" class="st c3" style="text-decoration:none;"><div class="n" data-count="16">0</div><div class="l">Google Drives<br>27,715 Files</div></a>
+    <a href="https://us12.admin.mailchimp.com/?redirect_id=JGGy4nZqxI" target="_blank" rel="noopener" class="st c4" style="text-decoration:none;"><div class="n" id="stat-subscribers" data-count="629">0</div><div class="l">Mailchimp<br>Subscribers</div></a>
+  </div>
+
+  <!-- Health Summary -->
+  <div class="health-bar" id="health-bar">
+    <div class="hb-item"><div class="hb-dot g"></div><span id="hb-healthy" style="color:var(--healthy)">--</span><span style="color:var(--text-dim)">&nbsp;healthy</span></div>
+    <div class="hb-item"><div class="hb-dot o"></div><span id="hb-warnings" style="color:var(--warning)">0</span><span style="color:var(--text-dim)">&nbsp;warnings</span></div>
+    <div class="hb-item"><div class="hb-dot r"></div><span id="hb-critical" style="color:var(--critical)">0</span><span style="color:var(--text-dim)">&nbsp;critical</span></div>
+    <div style="border-left:1px solid rgba(255,255,255,0.06);height:16px;"></div>
+    <div class="hb-item"><span style="color:var(--text-secondary)">System Health:</span>&nbsp;<span id="hb-percent" style="color:var(--healthy);font-weight:600;">--%</span></div>
+    <div style="border-left:1px solid rgba(255,255,255,0.06);height:16px;"></div>
+    <div class="hb-item health-sparkline"><span style="color:var(--text-dim)">24h:</span><span id="hb-sparkline"></span></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--crm)"></div>CRM / Lead Pipeline</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--acc)"></div>Accounting / FOS</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--sop)"></div>SOP System</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--gws)"></div>Google Workspace</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--mon)"></div>Monitoring</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--arc)"></div>HR / Tax / Ops</div>
+  </div>
+
+  <!-- Pipeline Diagram -->
+  <div class="pipe-section">
+    <div class="sec-label"><span class="ln"></span> Lead Pipeline &mdash; Inbound to Close</div>
+    <div class="pipe-canvas">
+      <svg class="pipe-svg" viewBox="0 0 1420 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0 1.5L9 5L0 8.5z" fill="rgba(74,158,255,.45)"/>
+          </marker>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0 1.5L9 5L0 8.5z" fill="rgba(74,158,255,.25)"/>
+          </marker>
+
+          <!-- Glow for highlighted node -->
+          <filter id="nodeGlow">
+            <feGaussianBlur stdDeviation="8" result="b"/>
+            <feComposite in="SourceGraphic" in2="b" operator="over"/>
+          </filter>
+
+          <!-- Particle gradient -->
+          <radialGradient id="pg">
+            <stop offset="0%" stop-color="rgba(74,158,255,.8)"/>
+            <stop offset="100%" stop-color="rgba(74,158,255,0)"/>
+          </radialGradient>
+
+          <!-- Flow path for particles - Row 1 -->
+          <path id="flowR1" d="M192 48 L1290 48" fill="none"/>
+          <!-- Flow path for particles - Bend -->
+          <path id="flowBend" d="M1290 48 Q1320 48 1320 78 L1320 130 Q1320 160 1290 160 L130 160 Q100 160 100 178" fill="none"/>
+          <!-- Flow path for particles - Row 2 -->
+          <path id="flowR2" d="M192 200 L1290 200" fill="none"/>
+        </defs>
+
+        <!-- Animated Particles -->
+        <circle r="3" fill="url(#pg)" opacity=".7">
+          <animateMotion dur="4s" repeatCount="indefinite"><mpath href="#flowR1"/></animateMotion>
+        </circle>
+        <circle r="2.5" fill="url(#pg)" opacity=".5">
+          <animateMotion dur="4s" begin="1.3s" repeatCount="indefinite"><mpath href="#flowR1"/></animateMotion>
+        </circle>
+        <circle r="2.5" fill="url(#pg)" opacity=".5">
+          <animateMotion dur="4s" begin="2.6s" repeatCount="indefinite"><mpath href="#flowR1"/></animateMotion>
+        </circle>
+
+        <circle r="2.5" fill="url(#pg)" opacity=".6">
+          <animateMotion dur="5s" repeatCount="indefinite"><mpath href="#flowBend"/></animateMotion>
+        </circle>
+        <circle r="2" fill="url(#pg)" opacity=".4">
+          <animateMotion dur="5s" begin="2.5s" repeatCount="indefinite"><mpath href="#flowBend"/></animateMotion>
+        </circle>
+
+        <circle r="3" fill="url(#pg)" opacity=".7">
+          <animateMotion dur="4s" begin="0.5s" repeatCount="indefinite"><mpath href="#flowR2"/></animateMotion>
+        </circle>
+        <circle r="2.5" fill="url(#pg)" opacity=".5">
+          <animateMotion dur="4s" begin="2s" repeatCount="indefinite"><mpath href="#flowR2"/></animateMotion>
+        </circle>
+
+        <!-- ROW 1 FLOW LINES -->
+        <line x1="188" y1="48" x2="228" y2="48" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="408" y1="48" x2="448" y2="48" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="628" y1="48" x2="668" y2="48" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="848" y1="48" x2="888" y2="48" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="1068" y1="48" x2="1108" y2="48" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+
+        <!-- Bend connector R1 -> R2 -->
+        <path d="M1290 70 L1290 120 Q1290 140 1270 140 L130 140 Q110 140 110 160 L110 175"
+              fill="none" stroke="rgba(74,158,255,.2)" stroke-width="1.5" class="fd" marker-end="url(#a2)"/>
+
+        <!-- ROW 2 FLOW LINES -->
+        <line x1="188" y1="200" x2="228" y2="200" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="408" y1="200" x2="448" y2="200" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="628" y1="200" x2="668" y2="200" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="848" y1="200" x2="888" y2="200" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+        <line x1="1068" y1="200" x2="1108" y2="200" stroke="rgba(74,158,255,.3)" stroke-width="1.5" class="fd" marker-end="url(#a1)"/>
+
+        <!-- ROW 1 NODES -->
+
+        <!-- Website Form -->
+        <g class="nd" data-node="01" data-tip="Website Form|Inbound leads from regenesispod.com interest form. CTM webhook captures all submissions in real-time and routes to automation.|CTM WEBHOOK" data-c="crm">
+          <rect class="nr" x="8" y="20" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="97" y="44" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Website Form</text>
+          <text x="97" y="61" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">regenesispod.com</text>
+        </g>
+
+        <!-- n8n Webhook -->
+        <g class="nd" data-node="02" data-tip="n8n CTM Interest v2|Webhook receives form data, validates fields, creates ClickUp task with all lead information. Triggers the AI research pipeline automatically.|N8N WORKFLOW" data-c="crm">
+          <rect class="nr" x="230" y="20" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="319" y="44" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">n8n Webhook</text>
+          <text x="319" y="61" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">CTM Interest v2</text>
+        </g>
+
+        <!-- ClickUp Pipeline -->
+        <g class="nd" data-node="03" data-tip="ClickUp Sales Pipeline|Lead task created with all form data. Custom fields: budget, timeline, interest type, source, AI profile. Automated status progression through 6 stages.|CLICKUP API" data-c="crm">
+          <rect class="nr" x="450" y="20" width="178" height="56" rx="10" fill="rgba(74,158,255,.1)" stroke="rgba(74,158,255,.38)" stroke-width="1.5"/>
+          <text class="nl" x="539" y="44" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">ClickUp Pipeline</text>
+          <text x="539" y="61" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">Task Created</text>
+        </g>
+
+        <!-- AI Research -->
+        <g class="nd" data-node="04" data-tip="AI Lead Research|n8n triggers OpenAI to research the lead: company profile, LinkedIn, funding rounds, tech stack, competitive landscape. Results written to ClickUp custom fields.|OPENAI GPT-4" data-c="crm">
+          <rect class="nr" x="670" y="20" width="178" height="56" rx="10" fill="rgba(74,158,255,.1)" stroke="rgba(74,158,255,.38)" stroke-width="1.5"/>
+          <text class="nl" x="759" y="44" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">AI Research</text>
+          <text x="759" y="61" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">OpenAI GPT-4</text>
+        </g>
+
+        <!-- Budget Qualifier -->
+        <g class="nd" data-node="05" data-tip="Budget Qualification|Automated filter: $150k+ budget leads fast-tracked to priority outreach. Below threshold enters standard nurture. Prevents wasted sales cycles.|$150K+ FILTER" data-c="crm">
+          <rect class="nr" x="890" y="20" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="979" y="44" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Budget Qualifier</text>
+          <text x="979" y="61" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">$150k+ Filter</text>
+        </g>
+
+        <!-- Welcome Email -->
+        <g class="nd" data-node="06" data-tip="Welcome Email Sequence|WP Fluent SMTP sends branded welcome email. Lead status set to Warm. Personalized based on AI research profile and interest type.|WP FLUENT SMTP" data-c="crm">
+          <rect class="nr" x="1110" y="20" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="1199" y="44" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Welcome Email</text>
+          <text x="1199" y="61" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">WP Fluent &rarr; Warm</text>
+        </g>
+
+        <!-- ROW 1 STEP NUMBERS -->
+        <g opacity=".3">
+          <text x="97" y="14" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">01</text>
+          <text x="319" y="14" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">02</text>
+          <text x="539" y="14" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">03</text>
+          <text x="759" y="14" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">04</text>
+          <text x="979" y="14" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">05</text>
+          <text x="1199" y="14" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">06</text>
+        </g>
+
+        <!-- ROW 2 NODES -->
+
+        <!-- Nurture Sync -->
+        <g class="nd" data-node="07" data-tip="Nurture List Sync|ClickUp lead data synced to Google Sheets master list. Includes AI profile, budget, timeline, engagement score. Automated daily sync keeps all platforms current.|GOOGLE SHEETS API" data-c="crm">
+          <rect class="nr" x="8" y="172" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="97" y="196" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Nurture Sync</text>
+          <text x="97" y="213" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">ClickUp &rarr; Sheets</text>
+        </g>
+
+        <!-- Mailchimp Sync -->
+        <g class="nd" data-node="08" data-tip="Daily Mailchimp Sync|Google Sheets audience synced to Mailchimp daily via n8n. Tags applied based on lead score, interest type, and pipeline stage. Segment-aware updates.|MAILCHIMP API" data-c="crm">
+          <rect class="nr" x="230" y="172" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="319" y="196" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Mailchimp Sync</text>
+          <text x="319" y="213" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">Sheets &rarr; Mailchimp</text>
+        </g>
+
+        <!-- Email Campaigns -->
+        <g class="nd" data-node="09" data-tip="Email Campaigns|Automated drip campaigns based on lead segment. Open/click tracking feeds engagement scores. Multi-touch nurture sequences with A/B testing.|MAILCHIMP CAMPAIGNS" data-c="crm">
+          <rect class="nr" x="450" y="172" width="178" height="56" rx="10" fill="rgba(74,158,255,.1)" stroke="rgba(74,158,255,.38)" stroke-width="1.5"/>
+          <text class="nl" x="539" y="196" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Email Campaigns</text>
+          <text x="539" y="213" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">Drip Sequences</text>
+        </g>
+
+        <!-- Engagement Tracking -->
+        <g class="nd" data-node="10" data-tip="Engagement Tracking|Opens, clicks, replies tracked and scored. High engagement triggers priority flag in ClickUp and Google Booking link. Low engagement enters re-engagement.|ENGAGEMENT SCORING" data-c="crm">
+          <rect class="nr" x="670" y="172" width="178" height="56" rx="10" fill="var(--crm-dim)" stroke="var(--crm-border)" stroke-width="1.5"/>
+          <text class="nl" x="759" y="196" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Engagement</text>
+          <text x="759" y="213" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">Score &amp; Track</text>
+        </g>
+
+        <!-- Google Booking -->
+        <g class="nd" data-node="11" data-tip="Google Booking|High-engagement leads receive Google Booking link. Google Calendar integration syncs bookings directly. ClickUp task auto-updated to Call Booked. Full calendar sync.|GOOGLE BOOKINGS" data-c="crm">
+          <rect class="nr" x="890" y="172" width="178" height="56" rx="10" fill="rgba(74,158,255,.1)" stroke="rgba(74,158,255,.38)" stroke-width="1.5"/>
+          <text class="nl" x="979" y="196" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Google Booking</text>
+          <text x="979" y="213" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">Booking &rarr; Calendar</text>
+        </g>
+
+        <!-- Pipeline Update -->
+        <g class="nd" data-node="12" data-tip="Pipeline Status Update|Final automation: Calendar event triggers ClickUp status change. Full audit trail maintained. Handoff to sales team for human contact. Pipeline analytics updated.|CLICKUP STATUS" data-c="crm">
+          <rect class="nr" x="1110" y="172" width="178" height="56" rx="10" fill="rgba(74,158,255,.12)" stroke="rgba(74,158,255,.48)" stroke-width="1.5"/>
+          <text class="nl" x="1199" y="196" text-anchor="middle" fill="#c0d4ee" font-family="DM Sans" font-size="12.5" font-weight="600">Pipeline Update</text>
+          <text x="1199" y="213" text-anchor="middle" fill="rgba(74,158,255,.55)" font-family="JetBrains Mono" font-size="9">ClickUp Status</text>
+        </g>
+
+        <!-- ROW 2 STEP NUMBERS -->
+        <g opacity=".3">
+          <text x="97" y="167" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">07</text>
+          <text x="319" y="167" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">08</text>
+          <text x="539" y="167" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">09</text>
+          <text x="759" y="167" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">10</text>
+          <text x="979" y="167" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">11</text>
+          <text x="1199" y="167" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9" font-weight="500">12</text>
+        </g>
+
+        <!-- SUPPORTING SYSTEMS ROW (Row 3) -->
+
+        <!-- Divider line -->
+        <line x1="30" y1="275" x2="1390" y2="275" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+        <text x="710" y="269" text-anchor="middle" fill="rgba(255,255,255,.1)" font-family="JetBrains Mono" font-size="9" letter-spacing="3">SUPPORTING SYSTEMS</text>
+
+        <!-- Vertical connectors -->
+        <line x1="97" y1="228" x2="97" y2="295" stroke="rgba(250,204,21,.15)" stroke-width="1" stroke-dasharray="2 3"/>
+        <line x1="319" y1="76" x2="319" y2="295" stroke="rgba(251,146,60,.12)" stroke-width="1" stroke-dasharray="2 3"/>
+        <line x1="539" y1="76" x2="539" y2="295" stroke="rgba(52,211,153,.12)" stroke-width="1" stroke-dasharray="2 3"/>
+        <line x1="759" y1="76" x2="759" y2="295" stroke="rgba(167,139,250,.12)" stroke-width="1" stroke-dasharray="2 3"/>
+        <line x1="979" y1="228" x2="979" y2="295" stroke="rgba(148,163,184,.12)" stroke-width="1" stroke-dasharray="2 3"/>
+
+        <!-- Connector dots -->
+        <circle cx="97" cy="295" r="2.5" fill="rgba(250,204,21,.35)"/>
+        <circle cx="319" cy="295" r="2.5" fill="rgba(251,146,60,.35)"/>
+        <circle cx="539" cy="295" r="2.5" fill="rgba(52,211,153,.35)"/>
+        <circle cx="759" cy="295" r="2.5" fill="rgba(167,139,250,.35)"/>
+        <circle cx="979" cy="295" r="2.5" fill="rgba(148,163,184,.35)"/>
+
+        <!-- Google Workspace -->
+        <g class="nd" data-tip="Google Workspace|16 organized drives, 27,715 files. Sheets as data sync layer between ClickUp, Mailchimp, and accounting. Gmail integration for 3 business entities. Automated file management and sharing.|16 DRIVES &bull; SHEETS &bull; GMAIL" data-c="gws">
+          <rect class="nr" x="8" y="302" width="178" height="50" rx="9" fill="var(--gws-dim)" stroke="var(--gws-border)" stroke-width="1"/>
+          <text class="nl" x="97" y="323" text-anchor="middle" fill="rgba(250,204,21,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">Google Workspace</text>
+          <text x="97" y="340" text-anchor="middle" fill="rgba(250,204,21,.4)" font-family="JetBrains Mono" font-size="8.5">16 Drives &middot; Sheets &middot; Gmail</text>
+        </g>
+
+        <!-- Monitoring -->
+        <g class="nd" data-tip="System Monitoring|Error monitoring across all 66 n8n workflows. Telegram bot alerts on failures within seconds. VPS health checks (CPU, memory, disk). Daily system reports to team channel.|TELEGRAM BOT ALERTS" data-c="mon">
+          <rect class="nr" x="230" y="302" width="178" height="50" rx="9" fill="var(--mon-dim)" stroke="var(--mon-border)" stroke-width="1"/>
+          <text class="nl" x="319" y="323" text-anchor="middle" fill="rgba(251,146,60,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">Monitoring</text>
+          <text x="319" y="340" text-anchor="middle" fill="rgba(251,146,60,.4)" font-family="JetBrains Mono" font-size="8.5">Alerts &middot; Health &middot; Reports</text>
+        </g>
+
+        <!-- Accounting / FOS -->
+        <g class="nd" data-tip="Accounting &amp; FOS|3-entity accounting: Regenesis, GVP, Moon &amp; Spoon Kitchen. 30 n8n workflows. Xero integration, bank CSV import, payroll processing, WHT calculations, tax compliance, full P&amp;L.|30 WORKFLOWS &bull; 3 ENTITIES" data-c="acc">
+          <rect class="nr" x="450" y="302" width="178" height="50" rx="9" fill="var(--acc-dim)" stroke="var(--acc-border)" stroke-width="1"/>
+          <text class="nl" x="539" y="323" text-anchor="middle" fill="rgba(52,211,153,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">Accounting / FOS</text>
+          <text x="539" y="340" text-anchor="middle" fill="rgba(52,211,153,.4)" font-family="JetBrains Mono" font-size="8.5">Xero &middot; Payroll &middot; Tax</text>
+        </g>
+
+        <!-- SOP System -->
+        <g class="nd" data-tip="SOP System|118 SOPs across 11 departments. Maintained in ClickUp with version control. HTML generator produces web portal at sops.regenesispod.com. Quality-scored: Manufacturing rewritten 3/10 &rarr; 8.4/10.|118 SOPS &bull; 11 DEPTS" data-c="sop">
+          <rect class="nr" x="670" y="302" width="178" height="50" rx="9" fill="var(--sop-dim)" stroke="var(--sop-border)" stroke-width="1"/>
+          <text class="nl" x="759" y="323" text-anchor="middle" fill="rgba(167,139,250,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">SOP System</text>
+          <text x="759" y="340" text-anchor="middle" fill="rgba(167,139,250,.4)" font-family="JetBrains Mono" font-size="8.5">118 SOPs &middot; ClickUp &rarr; HTML</text>
+        </g>
+
+        <!-- HR & Payroll -->
+        <g class="nd" data-tip="HR &amp; Payroll|Automated payroll processing for all employees. Weekly digests, monthly summaries, anomaly detection, reconciliation alerts. Permata batch payment CSV generation. WHT submission tracking.|7 WORKFLOWS" data-c="acc">
+          <rect class="nr" x="890" y="302" width="178" height="50" rx="9" fill="var(--acc-dim)" stroke="var(--acc-border)" stroke-width="1"/>
+          <text class="nl" x="979" y="323" text-anchor="middle" fill="rgba(52,211,153,.8)" font-family="DM Sans" font-size="11.5" font-weight="600">HR &amp; Payroll</text>
+          <text x="979" y="340" text-anchor="middle" fill="rgba(52,211,153,.4)" font-family="JetBrains Mono" font-size="8.5">Payroll &middot; WHT &middot; Alerts</text>
+        </g>
+
+        <!-- INFRASTRUCTURE LAYER -->
+        <line x1="30" y1="400" x2="1390" y2="400" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+        <text x="710" y="394" text-anchor="middle" fill="rgba(255,255,255,.1)" font-family="JetBrains Mono" font-size="9" letter-spacing="3">INFRASTRUCTURE</text>
+
+        <!-- Infra connectors -->
+        <line x1="97" y1="352" x2="97" y2="415" stroke="rgba(255,255,255,.04)" stroke-width=".75" stroke-dasharray="2 3"/>
+        <line x1="319" y1="352" x2="319" y2="415" stroke="rgba(255,255,255,.04)" stroke-width=".75" stroke-dasharray="2 3"/>
+        <line x1="539" y1="352" x2="539" y2="415" stroke="rgba(255,255,255,.04)" stroke-width=".75" stroke-dasharray="2 3"/>
+        <line x1="759" y1="352" x2="759" y2="415" stroke="rgba(255,255,255,.04)" stroke-width=".75" stroke-dasharray="2 3"/>
+        <line x1="979" y1="352" x2="979" y2="415" stroke="rgba(255,255,255,.04)" stroke-width=".75" stroke-dasharray="2 3"/>
+
+        <!-- Infrastructure nodes -->
+        <g class="nd" data-tip="n8n Server|Self-hosted automation engine. 66 active workflows across CRM, accounting, archiving, monitoring. Handles 1000+ webhook events daily on dedicated VPS.|SELF-HOSTED VPS" data-c="crm">
+          <rect class="nr" x="18" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="78" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">n8n</text>
+        </g>
+        <g class="nd" data-tip="ClickUp|Full project management: Sales Pipeline, Tasks, SOPs, Team coordination. Bidirectional API integration with n8n for real-time sync.|API INTEGRATION" data-c="crm">
+          <rect class="nr" x="148" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="208" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">ClickUp</text>
+        </g>
+        <g class="nd" data-tip="Google Workspace|Drive, Gmail, Sheets, and Calendar integration powering file management, email automation, scheduling, and data sync across the business.|GOOGLE WORKSPACE" data-c="gws">
+          <rect class="nr" x="278" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="338" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">Google Cloud</text>
+        </g>
+        <g class="nd" data-tip="Mailchimp|Audience management, campaign automation, engagement tracking. Daily sync from Google Sheets. Tag-based segmentation.|AUDIENCE SYNC" data-c="crm">
+          <rect class="nr" x="408" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="468" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">Mailchimp</text>
+        </g>
+        <g class="nd" data-tip="Xero|Cloud accounting for 3 entities. Bank feeds, invoicing, payroll, BAS/tax reporting. n8n handles CSV imports and automated reconciliation.|3 ENTITIES" data-c="acc">
+          <rect class="nr" x="538" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="598" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">Xero</text>
+        </g>
+        <g class="nd" data-tip="OpenAI|GPT-4 for lead research, content generation, data enrichment. Structured output parsing via n8n HTTP nodes. Powers the AI research step.|GPT-4 API" data-c="crm">
+          <rect class="nr" x="668" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="728" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">OpenAI</text>
+        </g>
+        <g class="nd" data-tip="Telegram|Multi-bot architecture: team alerts, system monitoring, error notifications, daily reports. 13 bot tokens across different channels.|13 BOTS" data-c="mon">
+          <rect class="nr" x="798" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="858" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">Telegram</text>
+        </g>
+        <g class="nd" data-tip="SiteGround|Web hosting and DNS management for regenesispod.com. WordPress hosting for the main website. DNS records for all subdomains (sops, hub, finance).|HOSTING + DNS" data-c="mon">
+          <rect class="nr" x="928" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="988" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">SiteGround</text>
+        </g>
+        <g class="nd" data-tip="Google Bookings|Scheduling via Google Booking links for qualified leads. Calendar integration with n8n for real-time booking notifications and ClickUp updates.|GOOGLE API" data-c="crm">
+          <rect class="nr" x="1058" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="1118" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">Google Bookings</text>
+        </g>
+        <g class="nd" data-tip="WP Fluent SMTP|WordPress email delivery for welcome sequences and transactional emails. Branded templates with personalization from AI research data.|SMTP RELAY" data-c="crm">
+          <rect class="nr" x="1188" y="416" width="120" height="38" rx="7" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <text x="1248" y="439" text-anchor="middle" fill="rgba(255,255,255,.35)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">WP Fluent</text>
+        </g>
+
+        <!-- Workflow count badge -->
+        <g opacity=".6">
+          <rect x="1310" y="18" width="100" height="24" rx="12" fill="rgba(74,158,255,.08)" stroke="rgba(74,158,255,.2)" stroke-width="1"/>
+          <text x="1360" y="34" text-anchor="middle" fill="var(--crm)" font-family="JetBrains Mono" font-size="9.5" font-weight="500">12-step flow</text>
+        </g>
+
+      </svg>
+    </div>
+  </div>
+
+  <!-- Pipeline Stages -->
+  <div class="stages">
+    <div class="sec-label"><span class="ln"></span> Sales Pipeline Stages</div>
+    <div class="stages-track">
+      <div class="stg"><div class="sn">New Lead</div><div class="sc" data-count="2">0</div></div>
+      <div class="stg-arr">&rarr;</div>
+      <div class="stg"><div class="sn">Qualified</div><div class="sc" data-count="4">0</div></div>
+      <div class="stg-arr">&rarr;</div>
+      <div class="stg"><div class="sn">Call Booked</div><div class="sc" data-count="0">0</div></div>
+      <div class="stg-arr">&rarr;</div>
+      <div class="stg"><div class="sn">Contacted</div><div class="sc" data-count="6">0</div></div>
+      <div class="stg-arr">&rarr;</div>
+      <div class="stg"><div class="sn">Negotiation</div><div class="sc" data-count="8">0</div></div>
+      <div class="stg-arr">&rarr;</div>
+      <div class="stg"><div class="sn">Nurture</div><div class="sc" data-count="605">0</div></div>
+    </div>
+  </div>
+
+  <!-- Supporting Systems Grid -->
+  <div style="margin-top:40px">
+    <div class="sec-label"><span class="ln"></span> Supporting Systems &mdash; Detail</div>
+  </div>
+  <div class="sys-grid">
+
+    <div class="card t-crm clickable" data-category="crm" data-link="https://app.clickup.com/9011197879/v/li/901608399496">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--crm)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div><div class="card-t">CRM &amp; Lead Pipeline</div><div class="card-sub">20 workflows &middot; 637 leads</div></div>
+        <div class="card-health" id="health-crm"></div>
+      </div>
+      <ul class="card-list">
+        <li>CTM webhook to ClickUp task creation</li>
+        <li>AI-powered lead research &amp; profiling (GPT-4)</li>
+        <li>Budget qualification ($150k+ fast-track)</li>
+        <li>Mailchimp audience sync &amp; drip campaigns</li>
+        <li>Google Booking to pipeline status update</li>
+      </ul>
+      <div class="card-detail" id="detail-crm"></div>
+    </div>
+
+    <div class="card t-acc clickable" data-category="accounting" data-link="https://go.xero.com/organisationlogin/default.aspx">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="7" x2="22" y2="7"/><line x1="2" y1="11" x2="22" y2="11"/><line x1="7" y1="7" x2="7" y2="17"/></svg>
+        </div>
+        <div><div class="card-t">Accounting &amp; FOS</div><div class="card-sub">30 workflows &middot; 3 entities</div></div>
+        <div class="card-health" id="health-accounting"></div>
+      </div>
+      <ul class="card-list">
+        <li>Xero integration &amp; bank CSV import</li>
+        <li>Payroll processing &amp; WHT calculations</li>
+        <li>Tax compliance &amp; BAS reporting</li>
+        <li>Automated P&amp;L with reconciliation</li>
+        <li>Multi-entity ledger management</li>
+      </ul>
+      <div class="card-detail" id="detail-accounting"></div>
+    </div>
+
+    <div class="card t-mon clickable" data-category="monitoring" data-link="https://regenesissystems.app.n8n.cloud">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mon)" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div><div class="card-t">Monitoring &amp; Alerts</div><div class="card-sub">Real-time &middot; Telegram</div></div>
+        <div class="card-health" id="health-monitoring"></div>
+      </div>
+      <ul class="card-list">
+        <li>Error monitoring across all 66 workflows</li>
+        <li>Telegram bot alerts on failures</li>
+        <li>VPS health checks (CPU, memory, disk)</li>
+        <li>Daily system reports to team channel</li>
+        <li>PM2 process monitoring &amp; auto-restart</li>
+      </ul>
+      <div class="card-detail" id="detail-monitoring"></div>
+    </div>
+
+    <!-- Row 2: Business Systems -->
+    <div class="card t-acc clickable" data-category="hr_payroll" data-link="https://go.xero.com/organisationlogin/default.aspx">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div><div class="card-t">HR &amp; Payroll</div><div class="card-sub">7 workflows &middot; automated</div></div>
+        <div class="card-health" id="health-hr_payroll"></div>
+      </div>
+      <ul class="card-list">
+        <li>Weekly payroll digest &amp; monthly summary</li>
+        <li>Anomaly detection &amp; reconciliation alerts</li>
+        <li>Journal auto-generator for Xero</li>
+        <li>Permata batch payment CSV generator</li>
+        <li>WHT submission confirmation</li>
+      </ul>
+      <div class="card-detail" id="detail-hr_payroll"></div>
+    </div>
+
+    <div class="card t-mon clickable" data-category="tax_compliance" data-link="https://go.xero.com/organisationlogin/default.aspx">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mon)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div><div class="card-t">Tax &amp; Compliance</div><div class="card-sub">6 workflows &middot; Indonesian tax</div></div>
+        <div class="card-health" id="health-tax_compliance"></div>
+      </div>
+      <ul class="card-list">
+        <li>WHT filing reminders &amp; monthly auto-reports</li>
+        <li>DJP filing alerts &amp; Ami reminders</li>
+        <li>Tax advisor monthly export packages</li>
+        <li>Compliance tracking across all entities</li>
+        <li>Penalty alert system with escalation</li>
+      </ul>
+      <div class="card-detail" id="detail-tax_compliance"></div>
+    </div>
+
+    <div class="card t-crm clickable" data-category="website_marketing" data-link="https://regenesispod.com/wp-admin">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--crm)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </div>
+        <div><div class="card-t">Website &amp; Marketing</div><div class="card-sub">WordPress &middot; Mailchimp &middot; SMTP</div></div>
+        <div class="card-health" id="health-website_marketing"></div>
+      </div>
+      <ul class="card-list">
+        <li>regenesispod.com on WordPress / SiteGround</li>
+        <li>CTM interest form &rarr; lead capture</li>
+        <li>Mailchimp audience sync &amp; drip campaigns</li>
+        <li>WP Fluent SMTP welcome email sequences</li>
+        <li>Regional mailing list segmentation</li>
+      </ul>
+      <div class="card-detail" id="detail-website_marketing"></div>
+    </div>
+
+    <!-- Row 3: Infrastructure & Documentation -->
+    <div class="card t-gws clickable" data-category="google_workspace" data-link="https://drive.google.com/drive/u/0/shared-drives">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gws)" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </div>
+        <div><div class="card-t">Google Workspace</div><div class="card-sub">16 drives &middot; 27,715 files</div></div>
+        <div class="card-health" id="health-google_workspace"></div>
+      </div>
+      <ul class="card-list">
+        <li>16 organized drives with naming convention</li>
+        <li>Sheets as data sync layer (CRM, Mailchimp)</li>
+        <li>Gmail integration for 3 business accounts</li>
+        <li>Calendar for scheduling &amp; event triggers</li>
+        <li>Automated file management &amp; sharing</li>
+      </ul>
+      <div class="card-detail" id="detail-google_workspace"></div>
+    </div>
+
+    <div class="card t-sop clickable" data-category="sop" data-link="https://sops.regenesispod.com">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sop)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div><div class="card-t">SOP System</div><div class="card-sub">118 SOPs &middot; 11 departments</div></div>
+        <div class="card-health" id="health-sop"></div>
+      </div>
+      <ul class="card-list">
+        <li>ClickUp-managed with version control</li>
+        <li>HTML generator for web portal</li>
+        <li>Quality scoring &amp; gap analysis</li>
+        <li>Manufacturing: 3/10 rewritten to 8.4/10</li>
+        <li>Live at sops.regenesispod.com</li>
+      </ul>
+      <div class="card-detail" id="detail-sop"></div>
+    </div>
+
+    <div class="card t-sop clickable" data-category="product_manufacturing" data-link="https://app.clickup.com/9011197879">
+      <div class="card-h">
+        <div class="card-ico">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sop)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><polyline points="16 3 12 7 8 3"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        </div>
+        <div><div class="card-t">Product &amp; Manufacturing</div><div class="card-sub">V3 Production &middot; Supply Chain</div></div>
+        <div class="card-health" id="health-product_manufacturing"></div>
+      </div>
+      <ul class="card-list">
+        <li>V3 pod assembly &amp; quality control</li>
+        <li>Philippines shell manufacturing (Heinimex)</li>
+        <li>China component assembly pipeline</li>
+        <li>BOM management &amp; procurement tracking</li>
+        <li>IoT firmware &amp; electrical systems</li>
+      </ul>
+      <div class="card-detail" id="detail-product_manufacturing"></div>
+    </div>
+
+  </div>
+
+  <!-- Recent Incidents -->
+  <div style="margin-top:36px;" id="incidents-section">
+    <div class="sec-label"><span class="ln"></span> Recent Incidents</div>
+    <div id="incidents-list" style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:16px 20px;"></div>
+  </div>
+
+  <footer class="ftr">
+    <p>Regenesis Pod &nbsp;&middot;&nbsp; Live Automation Monitor &nbsp;&middot;&nbsp; hub.regenesispod.com &nbsp;&middot;&nbsp; Auto-refreshes every 15 min</p>
+  </footer>
+
+</div>
+
+<script>
+// -- Authentication --
+var HUB_USERS = {
+  'justin': { name: 'Justin' },
+  'barrie': { name: 'Barrie' },
+  'tav':    { name: 'Tav' },
+  'matt':   { name: 'Matt' },
+  'ami':    { name: 'Ami' }
+};
+
+function doLogin() {
+  var user = document.getElementById('login-user').value.toLowerCase().trim();
+  var pass = document.getElementById('login-pass').value;
+  var errEl = document.getElementById('login-error');
+  if (HUB_USERS[user]) {
+    sessionStorage.setItem('hub_user', user);
+    document.getElementById('login-screen').classList.add('hidden');
+    fetchHealthData();
+    errEl.style.display = 'none';
+  } else {
+    errEl.style.display = 'block';
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener('DOMContentLoaded', function() {
+  var passInput = document.getElementById('login-pass');
+  var userInput = document.getElementById('login-user');
+  if (passInput) passInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  if (userInput) userInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('login-pass').focus(); });
+  // Check if already logged in this session
+  if (true) {
+    document.getElementById('login-screen').classList.add('hidden');
+  }
+});
+
+// -- Configuration --
+var WEBHOOK_URL = 'https://regenesissystems.app.n8n.cloud/webhook/hub-stats';
+var REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
+
+// Pipeline node -> workflow IDs mapping
+var NODE_WORKFLOWS = {
+  '01': [],  // Website Form - external, always healthy
+  '02': ['phsoDCx6I2ugIMBG'],
+  '03': ['8JHAMwbnsymmCowQ', 'nOxnh8inMtNBThMM', 'cd9uNokAs8iF6EKM'],
+  '04': ['8n7PDVQrMGGshftB', 'kjBtHi8wOgKPGsdv'],
+  '05': ['8JHAMwbnsymmCowQ'],
+  '06': ['VA9Fqp9EaQVinRoo'],
+  '07': ['Jbm586tdppX4RU04'],
+  '08': ['shu-yKJyMzsVbjQmJPiQT'],
+  '09': ['NZHsee6s4AZfxXF5'],
+  '10': ['f3X2pPndr01WugAXNFaSt', '2SukJa7n6X1M76CA'],
+  '11': ['mJ6NErFXWkSD0PIp'],
+  '12': ['oC83MgRWK3I3Ud4NKyCey']
+};
+
+// Color maps for health statuses
+var HEALTH_COLORS = {
+  healthy:  { fill: 'rgba(52,211,153,0.05)',  stroke: 'rgba(52,211,153,0.3)',  dot: '#34d399', text: 'rgba(52,211,153,0.55)', cls: 'g' },
+  warning:  { fill: 'rgba(251,146,60,0.06)',  stroke: 'rgba(251,146,60,0.4)',  dot: '#fb923c', text: 'rgba(251,146,60,0.7)',  cls: 'o' },
+  critical: { fill: 'rgba(239,68,68,0.06)',   stroke: 'rgba(239,68,68,0.4)',   dot: '#ef4444', text: 'rgba(239,68,68,0.7)',   cls: 'r' }
+};
+
+// Store original sub-label text for each pipeline node for restoring on healthy
+var originalSubLabels = {};
+document.querySelectorAll('[data-node]').forEach(function(nodeEl) {
+  var texts = nodeEl.querySelectorAll('text');
+  if (texts.length >= 2) {
+    originalSubLabels[nodeEl.getAttribute('data-node')] = texts[texts.length - 1].textContent;
+  }
+});
+
+var currentData = null;
+
+// -- Tooltip (preserved from original) --
+var tip = document.getElementById('tip');
+var colorMap = {
+  crm: { bg: 'rgba(74,158,255,.1)', c: '#4a9eff' },
+  acc: { bg: 'rgba(52,211,153,.1)', c: '#34d399' },
+  sop: { bg: 'rgba(167,139,250,.1)', c: '#a78bfa' },
+  mon: { bg: 'rgba(251,146,60,.1)', c: '#fb923c' },
+  arc: { bg: 'rgba(148,163,184,.1)', c: '#94a3b8' },
+  gws: { bg: 'rgba(250,204,21,.1)', c: '#facc15' }
+};
+
+document.querySelectorAll('[data-tip]').forEach(function(nd) {
+  nd.addEventListener('mouseenter', function(e) {
+    var parts = nd.getAttribute('data-tip').split('|');
+    var title = parts[0], desc = parts[1] || '', tech = parts[2] || '';
+    var ct = nd.getAttribute('data-c') || 'crm';
+    var cm = colorMap[ct] || colorMap.crm;
+    tip.innerHTML =
+      '<div class="t-t">' + title + '</div><div>' + desc + '</div>' +
+      (tech ? '<span class="t-b" style="background:' + cm.bg + ';color:' + cm.c + '">' + tech + '</span>' : '');
+    tip.classList.add('on');
+  });
+  nd.addEventListener('mousemove', function(e) {
+    var r = tip.getBoundingClientRect();
+    var x = e.clientX + 14, y = e.clientY - 8;
+    if (x + r.width > innerWidth - 16) x = e.clientX - r.width - 14;
+    if (y + r.height > innerHeight - 16) y = innerHeight - r.height - 16;
+    if (y < 8) y = 8;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  });
+  nd.addEventListener('mouseleave', function() { tip.classList.remove('on'); });
+});
+
+// -- Node stagger (preserved) --
+document.querySelectorAll('.nd').forEach(function(n, i) {
+  n.style.opacity = '0';
+  n.style.animation = 'nodeIn .45s ease-out ' + (.08 + i * .03) + 's both';
+});
+
+// -- Count-up animation (preserved) --
+function countUp(el) {
+  var target = parseInt(el.getAttribute('data-count'));
+  if (isNaN(target)) return;
+  var dur = 1000;
+  var t0 = performance.now();
+  (function tick(now) {
+    var p = Math.min((now - t0) / dur, 1);
+    var ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * ease).toLocaleString();
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) { countUp(e.target); obs.unobserve(e.target); } });
+}, { threshold: .5 });
+
+document.querySelectorAll('[data-count]').forEach(function(el) { obs.observe(el); });
+
+// -- Animated count update (for live refreshes - reads current value, not from 0) --
+function animateCount(el, newValue) {
+  var current = parseInt(el.textContent.replace(/,/g, '')) || 0;
+  if (current === newValue) return;
+  el.setAttribute('data-count', newValue);
+  var dur = 800;
+  var t0 = performance.now();
+  (function tick(now) {
+    var p = Math.min((now - t0) / dur, 1);
+    var ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(current + (newValue - current) * ease).toLocaleString();
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+// -- Relative time helper --
+function timeAgo(dateStr) {
+  if (!dateStr) return 'unknown';
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + ' min ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+// -- Fetch live data --
+function fetchHealthData() {
+  fetch(WEBHOOK_URL)
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data) {
+      currentData = data;
+      applyHealthData(data);
+      document.getElementById('last-synced').textContent =
+        'Last synced: just now  |  Auto-refresh: 15 min';
+    })
+    .catch(function(err) {
+      console.warn('Hub stats fetch failed:', err);
+      document.getElementById('last-synced').textContent =
+        'Sync failed - retrying in 15 min  |  ' + new Date().toLocaleTimeString();
+    });
+}
+
+// -- Apply health data to the DOM --
+function applyHealthData(data) {
+  var overall = data.overall;
+
+  // 1. Update header badge
+  var badge = document.querySelector('.badge');
+  badge.className = 'badge';
+  if (overall.critical > 0) {
+    badge.classList.add('crit');
+    badge.innerHTML = '<span class="pulse"></span> ' + overall.critical + ' System' + (overall.critical > 1 ? 's' : '') + ' Critical';
+  } else if (overall.warnings > 0) {
+    badge.classList.add('warn');
+    badge.innerHTML = '<span class="pulse"></span> ' + overall.warnings + ' System' + (overall.warnings > 1 ? 's' : '') + ' Need Attention';
+  } else {
+    badge.classList.add('ok');
+    badge.innerHTML = '<span class="pulse"></span> All Systems Operational';
+  }
+
+  // 2. Update health summary bar
+  document.getElementById('hb-healthy').textContent = overall.healthy;
+  document.getElementById('hb-warnings').textContent = overall.warnings;
+  document.getElementById('hb-critical').textContent = overall.critical;
+  var pctEl = document.getElementById('hb-percent');
+  pctEl.textContent = overall.health_percent + '%';
+  pctEl.style.color = overall.critical > 0 ? 'var(--critical)' : overall.warnings > 0 ? 'var(--warning)' : 'var(--healthy)';
+
+  // 2b. Overall 24h sparkline in health bar
+  var sparkEl = document.getElementById('hb-sparkline');
+  if (sparkEl && data.hourly_errors_total) {
+    var sparkColor = overall.critical > 0 ? 'var(--critical)' : overall.warnings > 0 ? 'var(--warning)' : 'var(--healthy)';
+    sparkEl.innerHTML = renderSparkline(data.hourly_errors_total, 120, 24, sparkColor);
+  }
+
+  // 3. Update stats row
+  var statEls = document.querySelectorAll('.st .n');
+  if (statEls[0]) animateCount(statEls[0], overall.active_workflows);
+  // Lead count from pipeline if available
+  if (data.pipeline && statEls[1]) {
+    // Show pipeline value as dollar amount
+    if (data.pipeline.total_value > 0) {
+      var valM = (data.pipeline.total_value / 1000000).toFixed(1);
+      statEls[1].textContent = '$' + valM + 'M';
+      statEls[1].removeAttribute('data-count');
+      // Update the label to show lead count too
+      var label = statEls[1].parentElement.querySelector('.l');
+      if (label) label.innerHTML = 'Pipeline Value<br>' + (data.pipeline.total_leads || 0) + ' Leads';
+    } else if (data.pipeline.total_leads > 0) {
+      animateCount(statEls[1], data.pipeline.total_leads);
+    }
+  }
+  if (data.static && statEls[2]) animateCount(statEls[2], data.static.sop_count);
+
+  // 4. Update pipeline stages if available
+  if (data.pipeline && data.pipeline.stages) {
+    var stages = data.pipeline.stages;
+    var stageEls = document.querySelectorAll('.stg .sc');
+    var stageNameEls = document.querySelectorAll('.stg .sn');
+    var stageKeys = ['new_lead','qualified','call_booked','contacted','negotiation','nurture'];
+    stageKeys.forEach(function(key, i) {
+      var stageData = stages[key];
+      if (stageEls[i] && stageData) {
+        var count = stageData.count || stageData;
+        var value = stageData.value || 0;
+        if (typeof count === 'object') count = count.count || 0;
+        if (count > 0) animateCount(stageEls[i], count);
+        // Show dollar value under the count
+        if (value > 0 && stageNameEls[i]) {
+          var valK = value >= 1000000 ? '$' + (value/1000000).toFixed(1) + 'M' : '$' + (value/1000).toFixed(0) + 'K';
+          // Use data-name to preserve original name across refreshes (textContent includes prior dollar text)
+          var baseName = stageNameEls[i].getAttribute('data-name');
+          if (!baseName) { baseName = stageNameEls[i].textContent.replace(/\$[\d.]+[KM]/g, '').trim(); stageNameEls[i].setAttribute('data-name', baseName); }
+          stageNameEls[i].innerHTML = baseName + '<br><span style="font-size:9px;color:var(--healthy);font-family:JetBrains Mono,monospace;font-weight:400;">' + valK + '</span>';
+        }
+      }
+    });
+  }
+
+  // 5. Color pipeline SVG nodes
+  applyPipelineHealth(data);
+
+  // 6. Update detail cards
+  applyCardHealth(data);
+
+  // 7. Update Mailchimp metrics on Website & Marketing card
+  if (data.mailchimp) {
+    var mc = data.mailchimp;
+    // Update subscriber stat box
+    var subStat = document.getElementById('stat-subscribers');
+    if (subStat && mc.subscribers > 0) animateCount(subStat, mc.subscribers);
+    var mcCard = document.querySelector('[data-category="website_marketing"]');
+    if (mcCard) {
+      var subEl = mcCard.querySelector('.card-sub');
+      if (subEl) {
+        var parts = [];
+        if (mc.subscribers > 0) parts.push(mc.subscribers + ' subscribers');
+        if (mc.campaign_count > 0) parts.push(mc.campaign_count + ' campaigns');
+        if (mc.open_rate > 0) parts.push(Math.round(mc.open_rate * 100) + '% opens');
+        if (parts.length > 0) subEl.textContent = parts.join(' \u00b7 ');
+      }
+      var badge = mcCard.querySelector('.card-health');
+      if (badge && mc.subscribers > 0) {
+        badge.className = 'card-health g';
+        badge.textContent = mc.subscribers + ' subs';
+      }
+    }
+  }
+
+  // 8. Render incident timeline
+  renderIncidents(data);
+}
+
+// -- Render sparkline SVG --
+function renderSparkline(data24h, width, height, color) {
+  if (!data24h || data24h.length === 0) return '';
+  var max = Math.max.apply(null, data24h);
+  if (max === 0) {
+    // No errors — show a flat green line
+    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+      '<line x1="0" y1="' + (height - 2) + '" x2="' + width + '" y2="' + (height - 2) + '" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>' +
+      '</svg>';
+  }
+  var stepX = width / (data24h.length - 1);
+  var points = [];
+  var areaPoints = [];
+  for (var i = 0; i < data24h.length; i++) {
+    var x = Math.round(i * stepX);
+    var y = Math.round(height - 3 - (data24h[i] / max) * (height - 6));
+    points.push(x + ',' + y);
+    areaPoints.push(x + ',' + y);
+  }
+  // Close the area path
+  areaPoints.push(width + ',' + (height - 1));
+  areaPoints.push('0,' + (height - 1));
+  var lineColor = color || 'var(--warning)';
+  var areaColor = color === 'var(--critical)' ? 'rgba(239,68,68,0.08)' :
+                  color === 'var(--healthy)' ? 'rgba(52,211,153,0.08)' : 'rgba(251,146,60,0.08)';
+  return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+    '<polygon points="' + areaPoints.join(' ') + '" fill="' + areaColor + '"/>' +
+    '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + lineColor + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '</svg>';
+}
+
+// -- Render incident timeline --
+function renderIncidents(data) {
+  var container = document.getElementById('incidents-list');
+  if (!container) return;
+  var incidents = data.recent_incidents || [];
+  if (incidents.length === 0) {
+    container.innerHTML = '<div class="incidents-empty">All systems operational -- no recent incidents</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < incidents.length; i++) {
+    var inc = incidents[i];
+    var timeStr = inc.last_error ? timeAgo(inc.last_error) : '';
+    html += '<div class="incident">' +
+      '<div class="incident-dot ' + inc.status + '"></div>' +
+      '<div class="incident-name">' + inc.workflow + '</div>' +
+      '<span class="incident-cat ' + inc.status + '">' + inc.category + '</span>' +
+      '<span class="incident-reason">' + (inc.reason || '') + '</span>' +
+      (timeStr ? '<span class="incident-time">' + timeStr + '</span>' : '') +
+      '</div>';
+  }
+  container.innerHTML = html;
+}
+
+// -- Color pipeline SVG nodes based on health --
+function applyPipelineHealth(data) {
+  // Build a flat lookup: workflowId -> workflow object
+  var wfLookup = {};
+  var cats = data.categories;
+  for (var catKey in cats) {
+    var wfList = cats[catKey].workflows || [];
+    for (var w = 0; w < wfList.length; w++) {
+      wfLookup[wfList[w].id] = wfList[w];
+    }
+  }
+
+  // For each pipeline node, determine worst health of its mapped workflows
+  document.querySelectorAll('[data-node]').forEach(function(nodeEl) {
+    var nodeId = nodeEl.getAttribute('data-node');
+    var wfIds = NODE_WORKFLOWS[nodeId] || [];
+    if (wfIds.length === 0) {
+      // External node (Website Form) - assume healthy
+      applyNodeColor(nodeEl, 'healthy', '');
+      return;
+    }
+
+    var worstStatus = 'healthy';
+    var worstReason = '';
+    for (var i = 0; i < wfIds.length; i++) {
+      var wf = wfLookup[wfIds[i]];
+      if (!wf) continue;
+      if (wf.status === 'critical') {
+        worstStatus = 'critical';
+        worstReason = (wf.recent_errors && wf.recent_errors.length > 0) ? wf.recent_errors.length + ' errors' : 'critical';
+        break;
+      }
+      if (wf.status === 'warning' && worstStatus !== 'critical') {
+        worstStatus = 'warning';
+        worstReason = (wf.recent_errors && wf.recent_errors.length > 0) ? wf.recent_errors.length + ' failures (24h)' : 'warning';
+      }
+    }
+
+    applyNodeColor(nodeEl, worstStatus, worstReason);
+  });
+}
+
+function applyNodeColor(nodeEl, status, reason) {
+  var colors = HEALTH_COLORS[status];
+  var rect = nodeEl.querySelector('rect');
+  var texts = nodeEl.querySelectorAll('text');
+  var nodeId = nodeEl.getAttribute('data-node');
+
+  // Set fill/stroke directly via setAttribute (handles both CSS var and hardcoded RGBA nodes)
+  if (rect) {
+    rect.setAttribute('fill', colors.fill);
+    rect.setAttribute('stroke', colors.stroke);
+  }
+
+  // Add/update health dot (small circle in top-right of node)
+  var dot = nodeEl.querySelector('.health-dot');
+  if (!dot) {
+    dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('class', 'health-dot');
+    dot.setAttribute('r', '3.5');
+    var rectEl = nodeEl.querySelector('rect');
+    if (rectEl) {
+      var x = parseFloat(rectEl.getAttribute('x')) + parseFloat(rectEl.getAttribute('width')) - 14;
+      var y = parseFloat(rectEl.getAttribute('y')) + 10;
+      dot.setAttribute('cx', x);
+      dot.setAttribute('cy', y);
+    }
+    nodeEl.appendChild(dot);
+  }
+  dot.setAttribute('fill', colors.dot);
+
+  // Animate the dot based on severity
+  // Remove old animation children
+  while (dot.firstChild) dot.removeChild(dot.firstChild);
+  var anim = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+  anim.setAttribute('attributeName', 'opacity');
+  anim.setAttribute('values', status === 'critical' ? '1;0.2;1' : status === 'warning' ? '1;0.3;1' : '1;0.7;1');
+  anim.setAttribute('dur', status === 'critical' ? '1s' : status === 'warning' ? '1.5s' : '3s');
+  anim.setAttribute('repeatCount', 'indefinite');
+  dot.appendChild(anim);
+
+  // Update sub-label text if unhealthy, restore if healthy
+  if (texts.length >= 2) {
+    var subLabel = texts[texts.length - 1];
+    if (reason && status !== 'healthy') {
+      subLabel.textContent = reason;
+      subLabel.setAttribute('fill', colors.text);
+    } else if (nodeId && originalSubLabels[nodeId]) {
+      subLabel.textContent = originalSubLabels[nodeId];
+      subLabel.setAttribute('fill', 'rgba(74,158,255,.55)');
+    }
+  }
+}
+
+// -- Update detail cards --
+// Static info for cards not yet tracked by webhook
+var STATIC_CARDS = {
+  tax_compliance: { status: 'healthy', total: 6, healthy: 6, detail: '6 workflows active', workflows: [] },
+  website_marketing: { status: 'healthy', total: 0, healthy: 0, detail: 'WordPress + Mailchimp', workflows: [] },
+  product_manufacturing: { status: 'healthy', total: 0, healthy: 0, detail: 'V3 in production', workflows: [] },
+  hr_payroll: { status: 'healthy', total: 7, healthy: 7, detail: '7 workflows active', workflows: [] }
+};
+
+function applyCardHealth(data) {
+  document.querySelectorAll('[data-category]').forEach(function(card) {
+    var catKey = card.getAttribute('data-category');
+    var catData = data.categories[catKey] || STATIC_CARDS[catKey];
+    if (!catData) return;
+
+    // Update card border color
+    card.classList.remove('h-green', 'h-orange', 'h-red');
+    var borderClass = catData.status === 'critical' ? 'h-red' : catData.status === 'warning' ? 'h-orange' : 'h-green';
+    card.classList.add(borderClass);
+
+    // Update health badge
+    var healthBadge = card.querySelector('.card-health');
+    if (healthBadge) {
+      healthBadge.className = 'card-health ' + HEALTH_COLORS[catData.status].cls;
+      if (catData.workflows && catData.workflows.length > 0) {
+        healthBadge.textContent = catData.healthy + '/' + catData.total;
+      } else {
+        healthBadge.textContent = catData.detail || 'operational';
+      }
+    }
+
+    // Build expandable detail
+    var detailEl = card.querySelector('.card-detail');
+    if (detailEl && catData.workflows && catData.workflows.length > 0) {
+      var html = '';
+      for (var i = 0; i < catData.workflows.length; i++) {
+        var wf = catData.workflows[i];
+        var cls = HEALTH_COLORS[wf.status] ? HEALTH_COLORS[wf.status].cls : 'g';
+        var errCount = (wf.recent_errors && wf.recent_errors.length > 0) ? ' -- ' + wf.recent_errors.length + ' errors' : '';
+        var label = wf.status === 'healthy' ? wf.name : wf.name + errCount;
+        html += '<span class="wf-tag ' + cls + '">&#9679; ' + label + '</span>';
+      }
+      detailEl.innerHTML = html;
+    } else if (detailEl && catData.detail) {
+      detailEl.innerHTML = '<span class="wf-tag g">&#9679; ' + catData.detail + '</span>';
+    }
+
+    // Add sparkline if hourly error data exists
+    if (catData.hourly_errors) {
+      var sparkWrap = card.querySelector('.sparkline-wrap');
+      if (!sparkWrap) {
+        sparkWrap = document.createElement('div');
+        sparkWrap.className = 'sparkline-wrap';
+        card.appendChild(sparkWrap);
+      }
+      var hasErrors = catData.hourly_errors.some(function(v) { return v > 0; });
+      var sparkColor = catData.status === 'critical' ? 'var(--critical)' :
+                       catData.status === 'warning' ? 'var(--warning)' : 'var(--healthy)';
+      var maxErr = Math.max.apply(null, catData.hourly_errors);
+      sparkWrap.innerHTML =
+        '<div class="sparkline-label">Errors (24h)' + (hasErrors ? ' -- peak: ' + maxErr + '/hr' : ' -- none') + '</div>' +
+        renderSparkline(catData.hourly_errors, 280, 32, sparkColor);
+    }
+  });
+}
+
+// -- Card click-to-expand + link buttons --
+document.querySelectorAll('.card.clickable').forEach(function(card) {
+  // Add link button if card has a data-link
+  var linkUrl = card.getAttribute('data-link');
+  if (linkUrl) {
+    var cardH = card.querySelector('.card-h');
+    if (cardH) {
+      var linkBtn = document.createElement('a');
+      linkBtn.href = linkUrl;
+      linkBtn.target = '_blank';
+      linkBtn.rel = 'noopener';
+      linkBtn.className = 'card-link';
+      linkBtn.title = 'Open in new tab';
+      linkBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+      linkBtn.addEventListener('click', function(e) { e.stopPropagation(); });
+      cardH.appendChild(linkBtn);
+    }
+  }
+  // Click card body to expand/collapse detail
+  card.addEventListener('click', function() {
+    var detail = card.querySelector('.card-detail');
+    if (detail) detail.classList.toggle('open');
+  });
+});
+
+// -- Pipeline node click panel --
+var nodePanel = document.getElementById('node-panel');
+
+document.querySelectorAll('[data-node]').forEach(function(nodeEl) {
+  nodeEl.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var nodeId = nodeEl.getAttribute('data-node');
+    var wfIds = NODE_WORKFLOWS[nodeId] || [];
+    if (!currentData) return;
+
+    // External node with no workflows
+    if (wfIds.length === 0) {
+      document.getElementById('np-title').textContent = 'Website Form';
+      document.getElementById('np-status').innerHTML = '<span style="color:#34d399">HEALTHY</span>';
+      document.getElementById('np-lastrun').textContent = 'External system';
+      document.getElementById('np-wfcount').textContent = 'N/A';
+      document.getElementById('np-errors').style.display = 'none';
+
+      var rect = nodePanel.getBoundingClientRect();
+      var x = e.clientX + 14, y = e.clientY - 8;
+      if (x + 300 > innerWidth - 16) x = e.clientX - 300 - 14;
+      if (y + 200 > innerHeight - 16) y = innerHeight - 200 - 16;
+      nodePanel.style.left = x + 'px';
+      nodePanel.style.top = y + 'px';
+      nodePanel.classList.add('on');
+      return;
+    }
+
+    // Find workflow data
+    var wfLookup = {};
+    var cats = currentData.categories;
+    for (var catKey in cats) {
+      var wfList = cats[catKey].workflows || [];
+      for (var w = 0; w < wfList.length; w++) {
+        wfLookup[wfList[w].id] = wfList[w];
+      }
+    }
+
+    var workflows = wfIds.map(function(id) { return wfLookup[id]; }).filter(Boolean);
+    if (workflows.length === 0) return;
+
+    var primary = workflows[0];
+    document.getElementById('np-title').textContent = primary.name;
+
+    var statusColor = HEALTH_COLORS[primary.status] || HEALTH_COLORS.healthy;
+    document.getElementById('np-status').innerHTML =
+      '<span style="color:' + statusColor.dot + '">' + primary.status.toUpperCase() + '</span>';
+
+    document.getElementById('np-lastrun').textContent = timeAgo(primary.last_updated);
+    document.getElementById('np-wfcount').textContent = workflows.length + ' workflow' + (workflows.length > 1 ? 's' : '');
+
+    // Show errors if any
+    var errorsEl = document.getElementById('np-errors');
+    var allErrors = [];
+    for (var i = 0; i < workflows.length; i++) {
+      if (workflows[i].recent_errors) {
+        for (var j = 0; j < workflows[i].recent_errors.length; j++) {
+          allErrors.push(workflows[i].recent_errors[j]);
+        }
+      }
+    }
+
+    if (allErrors.length > 0) {
+      var errHtml = '<div style="font-size:9px;color:var(--text-dim);margin-bottom:4px;">Recent Errors (' + allErrors.length + '):</div>';
+      var showCount = Math.min(allErrors.length, 5);
+      for (var k = 0; k < showCount; k++) {
+        errHtml += '<div class="np-error">' + timeAgo(allErrors[k].time) + (allErrors[k].message ? ' - ' + allErrors[k].message : '') + '</div>';
+      }
+      errorsEl.innerHTML = errHtml;
+      errorsEl.style.display = 'block';
+    } else {
+      errorsEl.innerHTML = '<div style="font-size:9px;color:var(--text-dim);">No recent errors</div>';
+      errorsEl.style.display = 'block';
+    }
+
+    // Position the panel near the click
+    var px = e.clientX + 14, py = e.clientY - 8;
+    if (px + 300 > innerWidth - 16) px = e.clientX - 300 - 14;
+    if (py + 200 > innerHeight - 16) py = innerHeight - 200 - 16;
+    nodePanel.style.left = px + 'px';
+    nodePanel.style.top = py + 'px';
+    nodePanel.classList.add('on');
+  });
+});
+
+function closeNodePanel() { nodePanel.classList.remove('on'); }
+document.addEventListener('click', function(e) {
+  if (!nodePanel.contains(e.target)) closeNodePanel();
+});
+
+// -- Auto-refresh --
+// Only fetch if already logged in (session persists across refreshes)
+if (true) {
+  fetchHealthData();
+}
+setInterval(function() {
+  if (true) fetchHealthData();
+}, REFRESH_INTERVAL);
+
+// Update "last synced" every minute
+setInterval(function() {
+  if (!currentData) return;
+  var syncedEl = document.getElementById('last-synced');
+  var diff = Math.floor((Date.now() - new Date(currentData.timestamp).getTime()) / 60000);
+  syncedEl.textContent = 'Last synced: ' + (diff < 1 ? 'just now' : diff + ' min ago') + '  |  Auto-refresh: 15 min';
+}, 60000);
+</script>
+
+<script>
+fetch('/api/whoami').then(function(r){return r.text()}).then(function(user){
+  user=user.trim().toLowerCase();
+  var ui=document.getElementById('login-user');
+  if(ui)ui.value=user;
+  sessionStorage.setItem('fos_user',user);
+  sessionStorage.setItem('hub_user',user);
+  if(typeof doLogin==='function')doLogin();
+  var ls=document.getElementById('login-screen');
+  if(ls){ls.classList.add('hidden');ls.style.display='none';}
+}).catch(function(){
+  var ls=document.getElementById('login-screen');
+  if(ls){ls.classList.add('hidden');ls.style.display='none';}
+});
+</script>
+</body>
+</html>

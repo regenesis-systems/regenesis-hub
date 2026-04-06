@@ -714,7 +714,7 @@
     <a href="https://app.clickup.com/9011197879/v/li/901608399496" target="_blank" rel="noopener" class="st c1" style="text-decoration:none;"><div class="n" data-count="637">0</div><div class="l">Leads in<br>Pipeline</div></a>
     <a href="https://sops.regenesispod.com" target="_blank" rel="noopener" class="st c2" style="text-decoration:none;"><div class="n" data-count="118">0</div><div class="l">SOPs Across<br>11 Departments</div></a>
     <a href="https://drive.google.com/drive/u/0/shared-drives" target="_blank" rel="noopener" class="st c3" style="text-decoration:none;"><div class="n" data-count="16">0</div><div class="l">Google Drives<br>27,715 Files</div></a>
-    <a href="https://us12.admin.mailchimp.com/?redirect_id=JGGy4nZqxI" target="_blank" rel="noopener" class="st c4" style="text-decoration:none;"><div class="n" id="stat-subscribers" data-count="629">0</div><div class="l">Mailchimp<br>Subscribers</div></a>
+    <div class="st c4"><div class="n" id="stat-subscribers" data-count="629">0</div><div class="l">Mailchimp<br>Subscribers</div></div>
   </div>
 
   <!-- Health Summary -->
@@ -1245,18 +1245,18 @@
 <script>
 // -- Authentication --
 var HUB_USERS = {
-  'justin': { name: 'Justin' },
-  'barrie': { name: 'Barrie' },
-  'tav':    { name: 'Tav' },
-  'matt':   { name: 'Matt' },
-  'ami':    { name: 'Ami' }
+  'justin': { password: 'regenesisjc26', name: 'Justin' },
+  'barrie': { password: 'regenesisbe26', name: 'Barrie' },
+  'tav':    { password: 'regenesistk26', name: 'Tav' },
+  'matt':   { password: 'regenesismw26', name: 'Matt' },
+  'ami':    { password: 'regenesisam26', name: 'Ami' }
 };
 
 function doLogin() {
   var user = document.getElementById('login-user').value.toLowerCase().trim();
   var pass = document.getElementById('login-pass').value;
   var errEl = document.getElementById('login-error');
-  if (HUB_USERS[user]) {
+  if (HUB_USERS[user] && HUB_USERS[user].password === pass) {
     sessionStorage.setItem('hub_user', user);
     document.getElementById('login-screen').classList.add('hidden');
     fetchHealthData();
@@ -1273,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (passInput) passInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
   if (userInput) userInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('login-pass').focus(); });
   // Check if already logged in this session
-  if (true) {
+  if (sessionStorage.getItem('hub_user')) {
     document.getElementById('login-screen').classList.add('hidden');
   }
 });
@@ -1866,11 +1866,11 @@ document.addEventListener('click', function(e) {
 
 // -- Auto-refresh --
 // Only fetch if already logged in (session persists across refreshes)
-if (true) {
+if (sessionStorage.getItem('hub_user')) {
   fetchHealthData();
 }
 setInterval(function() {
-  if (true) fetchHealthData();
+  if (sessionStorage.getItem('hub_user')) fetchHealthData();
 }, REFRESH_INTERVAL);
 
 // Update "last synced" every minute
@@ -1880,22 +1880,6 @@ setInterval(function() {
   var diff = Math.floor((Date.now() - new Date(currentData.timestamp).getTime()) / 60000);
   syncedEl.textContent = 'Last synced: ' + (diff < 1 ? 'just now' : diff + ' min ago') + '  |  Auto-refresh: 15 min';
 }, 60000);
-</script>
-
-<script>
-fetch('/api/whoami').then(function(r){return r.text()}).then(function(user){
-  user=user.trim().toLowerCase();
-  var ui=document.getElementById('login-user');
-  if(ui)ui.value=user;
-  sessionStorage.setItem('fos_user',user);
-  sessionStorage.setItem('hub_user',user);
-  if(typeof doLogin==='function')doLogin();
-  var ls=document.getElementById('login-screen');
-  if(ls){ls.classList.add('hidden');ls.style.display='none';}
-}).catch(function(){
-  var ls=document.getElementById('login-screen');
-  if(ls){ls.classList.add('hidden');ls.style.display='none';}
-});
 </script>
 </body>
 </html>

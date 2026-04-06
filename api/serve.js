@@ -52,7 +52,7 @@ module.exports = (req, res) => {
       res.status(200).send(content);
     } else {
       // Default to index.html
-      const indexPath = path.join(__dirname, '..', 'index.html');
+      const indexPath = path.join(__dirname, '..', '_app.html');
       const content = fs.readFileSync(indexPath, 'utf8');
       res.setHeader('Content-Type', 'text/html');
       res.status(200).send(content);

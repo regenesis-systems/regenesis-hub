@@ -1,0 +1,9 @@
+{
+  "name": "regenesis-hub",
+  "version": "1.0.0",
+  "description": "Regenesis Hub dashboard (static HTML + Vercel serverless API).",
+  "private": true,
+  "dependencies": {
+    "@sentry/node": "^8.0.0"
+  }
+}

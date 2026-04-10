@@ -1,0 +1,15 @@
+# CODEOWNERS - auto-assigns reviewers for PRs
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Part of the Universal Quality Standard
+
+# Default owner for everything in the repo
+*       @regenesis-systems
+
+# CI/CD and quality infrastructure
+/.github/                   @regenesis-systems
+/.pre-commit-config.yaml    @regenesis-systems
+/.coderabbit.yaml           @regenesis-systems
+
+# Documentation
+*.md                        @regenesis-systems
+/docs/                      @regenesis-systems

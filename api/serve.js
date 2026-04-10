@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { withSentry } = require('./_observability');
 
 const USERS = {"justin": "1a66334eaa10bc7be7d8a6668470037f239ab744d2a73052e2bcd5d643606992", "barrie": "c5271e0da36df65e0e6a5a623dcbcb34d6d608bd4254b7805cce90f04d68bbb8", "ami": "7cf9be16dfbfd3c4da44084d85adee2b23a316c1f1539f8f06581c2909ad2539", "tav": "644d969832ded0b1b5fdf1561cffd360358e845ed15d15e2e310c0e8306893a3", "matt": "8f19feeb996e6fdecb9b7c8fa15c997b9f2d3b629c0ea03a1d3b9e3fbd458dff"};
 
@@ -8,7 +9,7 @@ function sha256(str) {
   return crypto.createHash('sha256').update(str).digest('hex');
 }
 
-module.exports = (req, res) => {
+module.exports = withSentry(async (req, res) => {
   // Check Authorization header
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Basic ')) {
@@ -58,6 +59,13 @@ module.exports = (req, res) => {
       res.status(200).send(content);
     }
   } catch (e) {
+    // Report to Sentry/GlitchTip but preserve the original user-facing
+    // 500 response so auth/redirect behavior stays identical.
+    try {
+      const { ensureInit } = require('./_observability');
+      const s = ensureInit();
+      if (s) s.captureException(e);
+    } catch (_) { /* never mask original error */ }
     res.status(500).send('Internal error');
   }
-};
+}, 'serve');

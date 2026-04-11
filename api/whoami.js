@@ -1,6 +1,7 @@
 const crypto = require('crypto');
+const { withSentry } = require('./_observability');
 
-module.exports = (req, res) => {
+module.exports = withSentry(async (req, res) => {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Basic ')) {
     res.status(401).send('');
@@ -10,4 +11,4 @@ module.exports = (req, res) => {
   const user = decoded.split(':')[0];
   res.setHeader('Content-Type', 'text/plain');
   res.status(200).send(user);
-};
+}, 'whoami');

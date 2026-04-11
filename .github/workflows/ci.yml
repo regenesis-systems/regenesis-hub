@@ -48,7 +48,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install Biome
         if: hashFiles('**/*.{js,ts,jsx,tsx}', 'package.json') != ''
@@ -87,7 +86,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install Node dependencies
         if: hashFiles('package.json') != ''

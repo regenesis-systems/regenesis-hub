@@ -4,6 +4,6 @@
   "description": "Regenesis Hub dashboard (static HTML + Vercel serverless API).",
   "private": true,
   "dependencies": {
-    "@sentry/node": "^8.0.0"
+    "@sentry/node": "^10.48.0"
   }
 }
